@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -32,6 +30,7 @@ interface Message {
   content: string
   timestamp: Date
   referencedNotes?: Screenshot[]
+  isLoading?: boolean
 }
 
 interface Flashcard {
@@ -50,8 +49,7 @@ const mockFlashcards: Flashcard[] = [
   {
     id: "1",
     question: "What is the useState hook used for in React?",
-    answer:
-      "useState is a React hook that allows you to add state to functional components. It returns an array with the current state value and a function to update it.",
+    answer: "useState is a React hook that allows you to add state to functional components. It returns an array with the current state value and a function to update it.",
   },
   {
     id: "2",
@@ -61,8 +59,7 @@ const mockFlashcards: Flashcard[] = [
   {
     id: "3",
     question: "How do you create a custom hook?",
-    answer:
-      'A custom hook is a JavaScript function whose name starts with "use" and that may call other hooks. It allows you to extract component logic into reusable functions.',
+    answer: 'A custom hook is a JavaScript function whose name starts with "use" and that may call other hooks. It allows you to extract component logic into reusable functions.',
   },
 ]
 
@@ -120,6 +117,7 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
   const [showAnswer, setShowAnswer] = useState(false)
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false)
   const [missingProvider, setMissingProvider] = useState<AIProvider | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -154,14 +152,12 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
     return false
   }
 
-  // Parse @note references from the input and silently attach note descriptions
   const parseNoteReferences = (text: string): { enhancedPrompt: string; referencedNotes: Screenshot[] } => {
     const noteRegex = /@note(\d+)/g
     const matches = [...text.matchAll(noteRegex)]
     const referencedNotes: Screenshot[] = []
     let enhancedPrompt = text
 
-    // Collect referenced notes
     matches.forEach((match) => {
       const noteNumber = Number.parseInt(match[1])
       const noteIndex = noteNumber - 1
@@ -170,7 +166,6 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
       }
     })
 
-    // If there are referenced notes, silently attach their descriptions to the prompt
     if (referencedNotes.length > 0) {
       let contextText = "\n\n[Context from referenced notes:\n"
       referencedNotes.forEach((note, index) => {
@@ -179,7 +174,6 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
       })
       contextText += "]\n"
 
-      // Replace @note references with cleaner text for display
       const cleanText = text.replace(noteRegex, (match, number) => {
         const noteIndex = Number.parseInt(number) - 1
         if (noteIndex >= 0 && noteIndex < screenshots.length) {
@@ -195,45 +189,44 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
   }
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return
 
     if (!checkApiKey(provider)) {
-      setMissingProvider(provider);
-      setShowApiKeyDialog(true);
-      return;
+      setMissingProvider(provider)
+      setShowApiKeyDialog(true)
+      return
     }
 
-    const { enhancedPrompt, referencedNotes } = parseNoteReferences(inputValue);
+    const { enhancedPrompt, referencedNotes } = parseNoteReferences(inputValue)
 
-    // Display the clean user message
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
       content: inputValue.replace(/@note(\d+)/g, (match, number) => {
-        const noteIndex = Number.parseInt(number) - 1;
+        const noteIndex = Number.parseInt(number) - 1
         if (noteIndex >= 0 && noteIndex < screenshots.length) {
-          return `note ${number} (${screenshots[noteIndex].timestamp})`;
+          return `note ${number} (${screenshots[noteIndex].timestamp})`
         }
-        return match;
+        return match
       }),
       timestamp: new Date(),
       referencedNotes,
-    };
+    }
 
-    // Add user message immediately
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue("");
+    setInputValue("")
+    setMessages((prev) => [...prev, userMessage])
 
-    // Create assistant message with loading state
-    const assistantMessageId = (Date.now() + 1).toString();
-    const assistantMessage: Message = {
+    const assistantMessageId = (Date.now() + 1).toString()
+    const loadingMessage: Message = {
       id: assistantMessageId,
       type: "assistant",
-      content: "", // Start with empty content
+      content: "",
       timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, assistantMessage]);
+      isLoading: true
+    }
+    
+    setMessages((prev) => [...prev, loadingMessage])
+    setIsLoading(true)
 
     try {
       const response = await fetch("/api/gemini", {
@@ -241,10 +234,9 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          videoId:videoId,
+        body: JSON.stringify({ 
           text: enhancedPrompt,
-          // Include any additional context needed
+          videoId:videoId,
           context: referencedNotes.length > 0 ? {
             notes: referencedNotes.map(note => ({
               timestamp: note.timestamp,
@@ -252,41 +244,46 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
             }))
           } : null
         }),
-      });
+      })
 
       if (!response.body) {
-        throw new Error("No response body");
+        throw new Error("No response body")
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let result = "";
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let result = ""
 
       while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+        const { value, done } = await reader.read()
+        if (done) break
 
-        result += decoder.decode(value);
-
-        // Update the assistant message with streaming content
-        setMessages(prev => prev.map(msg =>
-          msg.id === assistantMessageId
-            ? { ...msg, content: result }
+        result += decoder.decode(value)
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, content: result, isLoading: false } 
             : msg
-        ));
-
-        scrollToBottom(); // Keep scrolling to the bottom as content streams
+        ))
+        
+        scrollToBottom()
       }
     } catch (error) {
-      console.error("Error calling Gemini API:", error);
-      // Update the message with error state
-      setMessages(prev => prev.map(msg =>
-        msg.id === assistantMessageId
-          ? { ...msg, content: "Sorry, there was an error processing your request." }
+      console.error("Error calling Gemini API:", error)
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { 
+              ...msg, 
+              content: "⚠️ Sorry, there was an error processing your request.", 
+              isLoading: false 
+            } 
           : msg
-      ));
+      ))
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
+
   const nextFlashcard = () => {
     setCurrentFlashcard((prev) => (prev + 1) % mockFlashcards.length)
     setShowAnswer(false)
@@ -387,11 +384,21 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[80%] p-3 rounded-lg ${message.type === "user" ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"
-                      }`}
+                    className={`max-w-[80%] p-3 rounded-lg ${
+                      message.type === "user" ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"
+                    }`}
                   >
                     <div className="text-sm">
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                      {message.isLoading ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse"></div>
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse delay-100"></div>
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse delay-200"></div>
+                          <span className="text-xs text-muted-foreground">Thinking...</span>
+                        </div>
+                      ) : message.content ? (
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      ) : null}
                     </div>
                     {message.referencedNotes && message.referencedNotes.length > 0 && (
                       <div className="mt-2 pt-2 border-t border-border/20">
@@ -473,10 +480,20 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
                     onKeyPress={handleKeyPress}
                     className="min-h-[40px] max-h-[96px] resize-none pr-12"
                     rows={1}
+                    disabled={isLoading}
                   />
                 </div>
-                <Button onClick={handleSendMessage} disabled={!inputValue.trim()} size="icon" className="shrink-0">
-                  <Send className="w-4 h-4" />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={!inputValue.trim() || isLoading} 
+                  size="icon" 
+                  className="shrink-0"
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </div>

@@ -1,10 +1,8 @@
 import { getYoutubeTranscript } from "@/lib/get-youtube-transcript";
 import CHAT_PROMPT from "@/Prompts/chat-prompt";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { NextResponse } from "next/server";
-import TranscriptAPI from "youtube-transcript-api";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API || "AIzaSyC8mAe6WVhvjSf4vBwITLQw15ZZ_ODmgKM");
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API!);
 
 const model = genAI.getGenerativeModel({
   model: "gemini-2.0-flash-001",
@@ -34,9 +32,6 @@ export async function POST(req: Request): Promise<Response> {
 
   const videoSubtitles = await getYoutubeTranscript(videoId)
   const videoTextOnly = videoSubtitles.map(subtitle => subtitle.text).join(" ");
-
-  console.log(videoTextOnly);
-
 
   const prompt = `${CHAT_PROMPT} 
   ---------------

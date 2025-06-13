@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
-import { Play, FileText, Save, Plus, Clock, Grid, Maximize, ChevronLeft, ChevronRight } from "lucide-react"
+import { Play, FileText, Save, Plus, Clock, Grid, Maximize, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { YouTubePlayer } from "./youtube-player"
 import { useToast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
@@ -28,9 +28,10 @@ interface VideoSectionProps {
   screenshots: Screenshot[]
   setScreenshots: (screenshots: Screenshot[]) => void
   videoId?: string
+  notesLoading: boolean
 }
 
-export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2bM" }: VideoSectionProps) {
+export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2bM", notesLoading }: VideoSectionProps) {
   const [mode, setMode] = useState<Mode>("video")
   const [notesView, setNotesView] = useState<NotesView>("grid")
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0)
@@ -169,7 +170,10 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
               className="flex items-center space-x-2"
             >
               <FileText className="w-4 h-4" />
-              <span>Study Notes ({currentScreenshots.length})</span>
+              <div className="flex gap-2">
+                <span>Study Notes</span>
+                <span>{notesLoading ? <Loader2 className="animate-spin rotate-45" /> : `(${currentScreenshots.length})`}</span>
+              </div>
             </Button>
           </div>
 
@@ -248,158 +252,173 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
           </div>
         ) : (
           <div className="h-full">
-            {currentScreenshots.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-center p-4">
-                <div className="max-w-md">
-                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">No study notes yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Add your first note to get started with AI-powered learning.
-                  </p>
-                  <Button onClick={() => setIsAddingNote(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Your First Note
-                  </Button>
-                </div>
-              </div>
-            ) : notesView === "full" ? (
-              <div className="h-full flex flex-col">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentNote?.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex-1 p-4 flex flex-col"
-                  >
-                    {/* Full Screen Note View */}
-                    <div className="flex-1 flex flex-col">
-                      {/* Note Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded text-xs font-medium">
-                            @note{currentNoteIndex + 1}
-                          </div>
-                          <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                            {currentNote?.timestamp}
-                          </div>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Note {currentNoteIndex + 1} of {currentScreenshots.length}
-                        </div>
-                      </div>
-
-                      {/* Note Image */}
-                      <div className="relative mb-4 flex-shrink-0">
-                        <div className="aspect-video max-h-[50vh] w-full relative overflow-hidden rounded-lg border border-border">
-                          <Image
-                            src={currentNote?.imageUrl || "/placeholder.svg?height=400&width=600"}
-                            alt={`Note ${currentNoteIndex + 1} screenshot`}
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Note Description */}
-                      <div className="flex-1 mb-4">
-                        <Textarea
-                          placeholder="Edit the note description..."
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          className="min-h-[120px] h-full resize-none"
-                        />
-                      </div>
-
-                      {/* Note Actions */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-muted-foreground">
-                          <Clock className="inline-block w-3 h-3 mr-1" />
-                          {formatCaptureTime(currentNote?.capturedAt || new Date())}
-                        </div>
-                        <Button onClick={handleSave} disabled={!description.trim()}>
-                          <Save className="w-4 h-4 mr-2" />
-                          Save Changes
-                        </Button>
-                      </div>
+            {
+              notesLoading ?
+                  <div className="h-full flex items-center justify-center text-center p-4">
+                    <div className="max-w-md">
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">Hang on</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        We are preparing your notes 
+                      </p>
+                      <Button onClick={() => setIsAddingNote(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Your First Note
+                      </Button>
                     </div>
-                  </motion.div>
-                </AnimatePresence>
+                  </div>
+                :
+                currentScreenshots.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-center p-4">
+                    <div className="max-w-md">
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">No study notes yet</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Add your first note to get started with AI-powered learning.
+                      </p>
+                      <Button onClick={() => setIsAddingNote(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Your First Note
+                      </Button>
+                    </div>
+                  </div>
+                ) : notesView === "full" ? (
+                  <div className="h-full flex flex-col">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={currentNote?.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex-1 p-4 flex flex-col"
+                      >
+                        {/* Full Screen Note View */}
+                        <div className="flex-1 flex flex-col">
+                          {/* Note Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-2">
+                              <div className="bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded text-xs font-medium">
+                                @note{currentNoteIndex + 1}
+                              </div>
+                              <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                                {currentNote?.timestamp}
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Note {currentNoteIndex + 1} of {currentScreenshots.length}
+                            </div>
+                          </div>
 
-                {/* Navigation Controls */}
-                <div className="p-4 border-t border-border flex items-center justify-between">
-                  <Button variant="outline" onClick={handlePrevNote} disabled={currentScreenshots.length <= 1}>
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous Note
-                  </Button>
-                  <Button variant="outline" onClick={handleNextNote} disabled={currentScreenshots.length <= 1}>
-                    Next Note
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="h-full p-4 overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {currentScreenshots.map((screenshot, index) => (
-                    <Card
-                      key={screenshot.id}
-                      className={`cursor-pointer transition-all hover:shadow-md border ${
-                        index === currentNoteIndex
-                          ? "ring-2 ring-emerald-500 border-emerald-200 dark:border-emerald-800"
-                          : "border-border hover:border-emerald-200 dark:hover:border-emerald-800"
-                      }`}
-                      onClick={() => {
-                        handleNoteSelect(index)
-                        setNotesView("full")
-                      }}
-                    >
-                      <div className="p-3">
-                        <div className="relative aspect-video w-full mb-3">
-                          <Image
-                            src={screenshot.imageUrl || "/placeholder.svg?height=120&width=200"}
-                            alt={`Note ${index + 1} screenshot`}
-                            fill
-                            className="rounded-md object-cover"
-                          />
-                          <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
-                            {screenshot.timestamp}
+                          {/* Note Image */}
+                          <div className="relative mb-4 flex-shrink-0">
+                            <div className="aspect-video max-h-[50vh] w-full relative overflow-hidden rounded-lg border border-border">
+                              <Image
+                                src={currentNote?.imageUrl || "/placeholder.svg?height=400&width=600"}
+                                alt={`Note ${currentNoteIndex + 1} screenshot`}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Note Description */}
+                          <div className="flex-1 mb-4">
+                            <Textarea
+                              placeholder="Edit the note description..."
+                              value={description}
+                              onChange={(e) => setDescription(e.target.value)}
+                              className="min-h-[120px] h-full resize-none"
+                            />
+                          </div>
+
+                          {/* Note Actions */}
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-muted-foreground">
+                              <Clock className="inline-block w-3 h-3 mr-1" />
+                              {formatCaptureTime(currentNote?.capturedAt || new Date())}
+                            </div>
+                            <Button onClick={handleSave} disabled={!description.trim()}>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save Changes
+                            </Button>
                           </div>
                         </div>
+                      </motion.div>
+                    </AnimatePresence>
 
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded text-xs font-medium">
-                            @note{index + 1}
+                    {/* Navigation Controls */}
+                    <div className="p-4 border-t border-border flex items-center justify-between">
+                      <Button variant="outline" onClick={handlePrevNote} disabled={currentScreenshots.length <= 1}>
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Previous Note
+                      </Button>
+                      <Button variant="outline" onClick={handleNextNote} disabled={currentScreenshots.length <= 1}>
+                        Next Note
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full p-4 overflow-y-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {currentScreenshots.map((screenshot, index) => (
+                        <Card
+                          key={screenshot.id}
+                          className={`cursor-pointer transition-all hover:shadow-md border ${index === currentNoteIndex
+                            ? "ring-2 ring-emerald-500 border-emerald-200 dark:border-emerald-800"
+                            : "border-border hover:border-emerald-200 dark:hover:border-emerald-800"
+                            }`}
+                          onClick={() => {
+                            handleNoteSelect(index)
+                            setNotesView("full")
+                          }}
+                        >
+                          <div className="p-3">
+                            <div className="relative aspect-video w-full mb-3">
+                              <Image
+                                src={screenshot.imageUrl || "/placeholder.svg?height=120&width=200"}
+                                alt={`Note ${index + 1} screenshot`}
+                                fill
+                                className="rounded-md object-cover"
+                              />
+                              <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
+                                {screenshot.timestamp}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded text-xs font-medium">
+                                @note{index + 1}
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-foreground line-clamp-2 mb-2">{screenshot.description}</p>
+
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>
+                                <Clock className="inline-block w-3 h-3 mr-1" />
+                                {new Date(screenshot.capturedAt).toLocaleDateString()}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleNoteSelect(index)
+                                  setNotesView("full")
+                                }}
+                              >
+                                <Maximize className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-
-                        <p className="text-xs text-foreground line-clamp-2 mb-2">{screenshot.description}</p>
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            <Clock className="inline-block w-3 h-3 mr-1" />
-                            {new Date(screenshot.capturedAt).toLocaleDateString()}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleNoteSelect(index)
-                              setNotesView("full")
-                            }}
-                          >
-                            <Maximize className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
           </div>
         )}
       </div>
