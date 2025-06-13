@@ -43,6 +43,7 @@ interface Flashcard {
 interface AIAssistantProps {
   setShowSettings: (show: boolean) => void
   screenshots: Screenshot[]
+  videoId:string
 }
 
 const mockFlashcards: Flashcard[] = [
@@ -110,7 +111,7 @@ useEffect(() => {
 
 > **Note**: Remember to always include dependencies in the useEffect dependency array to avoid bugs.`
 
-export function AIAssistant({ setShowSettings, screenshots }: AIAssistantProps) {
+export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssistantProps) {
   const [mode, setMode] = useState<AssistantMode>("chat")
   const [provider, setProvider] = useState<AIProvider>("openai")
   const [messages, setMessages] = useState<Message[]>([])
@@ -193,66 +194,99 @@ export function AIAssistant({ setShowSettings, screenshots }: AIAssistantProps) 
     return { enhancedPrompt, referencedNotes }
   }
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
 
     if (!checkApiKey(provider)) {
-      setMissingProvider(provider)
-      setShowApiKeyDialog(true)
-      return
+      setMissingProvider(provider);
+      setShowApiKeyDialog(true);
+      return;
     }
 
-    const { enhancedPrompt, referencedNotes } = parseNoteReferences(inputValue)
+    const { enhancedPrompt, referencedNotes } = parseNoteReferences(inputValue);
 
-    // Display the clean user message (without the context)
-    const displayText = inputValue.replace(/@note(\d+)/g, (match, number) => {
-      const noteIndex = Number.parseInt(number) - 1
-      if (noteIndex >= 0 && noteIndex < screenshots.length) {
-        return `note ${number} (${screenshots[noteIndex].timestamp})`
-      }
-      return match
-    })
-
+    // Display the clean user message
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
-      content: displayText,
+      content: inputValue.replace(/@note(\d+)/g, (match, number) => {
+        const noteIndex = Number.parseInt(number) - 1;
+        if (noteIndex >= 0 && noteIndex < screenshots.length) {
+          return `note ${number} (${screenshots[noteIndex].timestamp})`;
+        }
+        return match;
+      }),
       timestamp: new Date(),
       referencedNotes,
-    }
+    };
 
-    // Generate AI response based on the enhanced prompt (with context)
+    // Add user message immediately
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+
+    // Create assistant message with loading state
+    const assistantMessageId = (Date.now() + 1).toString();
     const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
+      id: assistantMessageId,
       type: "assistant",
-      content: `I understand you're asking about "${displayText}". ${
-        referencedNotes.length > 0
-          ? `Based on your referenced notes from ${referencedNotes.map((n) => n.timestamp).join(", ")}, here's what I can help you with:`
-          : "Based on the React hooks video content, here's what I can help you with:"
+      content: "", // Start with empty content
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+
+    try {
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          videoId:videoId,
+          text: enhancedPrompt,
+          // Include any additional context needed
+          context: referencedNotes.length > 0 ? {
+            notes: referencedNotes.map(note => ({
+              timestamp: note.timestamp,
+              description: note.description
+            }))
+          } : null
+        }),
+      });
+
+      if (!response.body) {
+        throw new Error("No response body");
       }
 
-${
-  referencedNotes.length > 0
-    ? referencedNotes
-        .map((note, index) => {
-          const noteNumber = screenshots.findIndex((s) => s.id === note.id) + 1
-          return `**From Note ${noteNumber} (${note.timestamp}):**
-${note.description}
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let result = "";
 
-This section covers important concepts that relate to your question. Let me provide more detailed insights based on this content...`
-        })
-        .join("\n\n")
-    : "Let me provide you with detailed information about React hooks and how they work..."
-}
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-Feel free to reference specific notes using @note1, @note2, etc. to ask more targeted questions!`,
-      timestamp: new Date(),
+        result += decoder.decode(value);
+
+        // Update the assistant message with streaming content
+        setMessages(prev => prev.map(msg =>
+          msg.id === assistantMessageId
+            ? { ...msg, content: result }
+            : msg
+        ));
+
+        scrollToBottom(); // Keep scrolling to the bottom as content streams
+      }
+    } catch (error) {
+      console.error("Error calling Gemini API:", error);
+      // Update the message with error state
+      setMessages(prev => prev.map(msg =>
+        msg.id === assistantMessageId
+          ? { ...msg, content: "Sorry, there was an error processing your request." }
+          : msg
+      ));
     }
-
-    setMessages((prev) => [...prev, userMessage, assistantMessage])
-    setInputValue("")
-  }
-
+  };
   const nextFlashcard = () => {
     setCurrentFlashcard((prev) => (prev + 1) % mockFlashcards.length)
     setShowAnswer(false)
@@ -353,9 +387,8 @@ Feel free to reference specific notes using @note1, @note2, etc. to ask more tar
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      message.type === "user" ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"
-                    }`}
+                    className={`max-w-[80%] p-3 rounded-lg ${message.type === "user" ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"
+                      }`}
                   >
                     <div className="text-sm">
                       <ReactMarkdown>{message.content}</ReactMarkdown>

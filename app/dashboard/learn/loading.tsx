@@ -1,3 +1,3 @@
 export default function Loading() {
-  return null
+  return <div>Hang on we are loading</div>
 }

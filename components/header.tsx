@@ -6,6 +6,7 @@ import { useTheme } from "next-themes"
 import { SettingsModal } from "@/components/settings-modal"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { UserButton } from "@civic/auth-web3/react"
 
 interface HeaderProps {
   showSettings: boolean
@@ -16,12 +17,6 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const navigationItems = [
-    { label: "Features", href: "#features" },
-    { label: "Docs", href: "#docs" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "Blog", href: "#blog" },
-  ]
 
   return (
     <>
@@ -29,7 +24,7 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center space-x-4">
+            <a href="/" className="flex items-center space-x-4">
               <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600">
                   <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,18 +40,7 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
               </motion.div>
 
               {/* Desktop Navigation */}
-              <nav className="hidden md:flex items-center space-x-8 ml-8">
-                {navigationItems.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
-                  >
-                    {item.label}
-                  </a>
-                ))}
-              </nav>
-            </div>
+            </a>
 
             {/* Right side actions */}
             <div className="flex items-center space-x-4">
@@ -84,21 +68,15 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
               </Button>
 
               {/* Sign In / Dashboard buttons */}
-              <div className="hidden md:flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  Sign in
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors duration-200"
-                >
-                  Start project
-                </Button>
-              </div>
+              <UserButton
+                style={{
+                  height: "38px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                className="hover:!text-black !text-black dark:!text-white font-semibold text-sm !rounded-md"
+              />
 
               {/* Mobile menu button */}
               <Button
@@ -114,48 +92,6 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
-            >
-              <div className="container mx-auto px-4 py-4">
-                <nav className="flex flex-col space-y-4">
-                  {navigationItems.map((item) => (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200 py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {item.label}
-                    </a>
-                  ))}
-                  <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200 dark:border-gray-800">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="justify-start text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                      Sign in
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="justify-start bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
-                    >
-                      Start project
-                    </Button>
-                  </div>
-                </nav>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
       <SettingsModal open={showSettings} onOpenChange={setShowSettings} />

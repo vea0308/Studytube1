@@ -1,21 +1,24 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowRight, AlertCircle } from "lucide-react"
 import { motion } from "framer-motion"
+import { useUser } from "@civic/auth-web3/react"
 
 export function YouTubeUrlInput() {
   const [url, setUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingVideoId, setPendingVideoId] = useState<string | null>(null)
+
   const router = useRouter()
+  const { signIn, user } = useUser()
 
   const extractVideoId = (url: string): string | null => {
-    // Handle different YouTube URL formats
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
     const match = url.match(regExp)
     return match && match[2].length === 11 ? match[2] : null
@@ -36,10 +39,25 @@ export function YouTubeUrlInput() {
       return
     }
 
+    if (!user) {
+      // Start loading while user signs in
+      setIsLoading(true)
+      setPendingVideoId(videoId)
+      signIn()
+      return
+    }
+
+    // If already signed in, redirect
     setIsLoading(true)
-    // Redirect to the dashboard with the video ID
     router.push(`/dashboard/learn?v=${videoId}`)
   }
+
+  useEffect(() => {
+    if (user && pendingVideoId) {
+      router.push(`/dashboard/learn?v=${pendingVideoId}`)
+      setPendingVideoId(null)
+    }
+  }, [user, pendingVideoId, router])
 
   return (
     <div className="w-full max-w-xl mx-auto">
@@ -50,13 +68,14 @@ export function YouTubeUrlInput() {
             placeholder="Paste a YouTube URL to start learning..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            disabled={isLoading}
             className="h-11 pl-4 pr-10 text-sm border-gray-200 dark:border-gray-800 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
           />
-          {url && (
+          {url && !isLoading && (
             <button
               type="button"
               onClick={() => setUrl("")}
-              className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <span className="sr-only">Clear input</span>
               <svg
@@ -78,17 +97,17 @@ export function YouTubeUrlInput() {
           >
             {isLoading ? (
               <svg
-                className="animate-spin h-4 w-4 text-white"
+                className="animate-spin h-4 w-4 text-black"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
               >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path
                   className="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+                />
               </svg>
             ) : (
               <ArrowRight className="h-4 w-4" />
@@ -96,6 +115,7 @@ export function YouTubeUrlInput() {
           </Button>
         </div>
 
+        {/* Error message with animation */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}

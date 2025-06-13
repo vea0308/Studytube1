@@ -5,6 +5,8 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { UserButton } from "@civic/auth-web3/react";
+
 import {
   Play,
   Brain,
@@ -23,12 +25,9 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { YouTubeUrlInput } from "./youtube-url-input"
+import Link from "next/link"
 
-interface LandingPageProps {
-  onGetStarted: () => void
-}
-
-export function LandingPage({ onGetStarted }: LandingPageProps) {
+export function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { scrollYProgress } = useScroll()
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"])
@@ -172,7 +171,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center space-x-8 ml-8">
-                {["Features", "How It Works", "Testimonials", "Pricing"].map((item) => (
+                {["Features", "How It Works"].map((item) => (
                   <a
                     key={item}
                     href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
@@ -188,15 +187,23 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             <div className="flex items-center space-x-4">
               {/* Sign In / Start Project buttons */}
               <div className="hidden md:flex items-center space-x-2">
-                <Button
+                {/* <Button
                   variant="ghost"
                   size="sm"
                   className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   Sign in
-                </Button>
+                </Button> */}
+                <UserButton
+                  style={{
+                    height: "38px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  className="hover:!text-black !text-black dark:!text-white font-semibold text-sm !rounded-md"
+                />
                 <Button
-                  onClick={onGetStarted}
                   size="sm"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors duration-200"
                 >
@@ -241,20 +248,21 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                     </a>
                   ))}
                   <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200 dark:border-gray-800">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="justify-start text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                      Sign in
-                    </Button>
-                    <Button
-                      onClick={onGetStarted}
-                      size="sm"
+                    <UserButton
+                      style={{
+                        height: "38px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                      className="hover:!text-black !text-black dark:!text-white font-semibold text-sm !rounded-md"
+                    />
+                    <Link
+                      href={"/"}
                       className="justify-start bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
                     >
                       Start learning
-                    </Button>
+                    </Link>
                   </div>
                 </nav>
               </div>

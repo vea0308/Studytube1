@@ -23,45 +23,6 @@ export interface Screenshot {
   imageUrl?: string
 }
 
-// Initial mock screenshots with images
-const initialScreenshots: Screenshot[] = [
-  {
-    id: "1",
-    timestamp: "02:15",
-    description:
-      "Introduction to React hooks - This section covers the basic concepts of React hooks and why they were introduced in React 16.8. Hooks allow you to use state and other React features without writing a class component.",
-    timeInSeconds: 135,
-    capturedAt: new Date(),
-    imageUrl: "/placeholder.svg?height=120&width=200&text=React+Hooks+Intro",
-  },
-  {
-    id: "2",
-    timestamp: "05:42",
-    description:
-      "useState hook explanation - Deep dive into the useState hook, showing how to declare state variables in functional components and how to update them properly.",
-    timeInSeconds: 342,
-    capturedAt: new Date(),
-    imageUrl: "/placeholder.svg?height=120&width=200&text=useState+Hook",
-  },
-  {
-    id: "3",
-    timestamp: "08:30",
-    description:
-      "useEffect hook basics - Understanding side effects in React and how useEffect replaces lifecycle methods in functional components.",
-    timeInSeconds: 510,
-    capturedAt: new Date(),
-    imageUrl: "/placeholder.svg?height=120&width=200&text=useEffect+Hook",
-  },
-  {
-    id: "4",
-    timestamp: "12:18",
-    description:
-      "Custom hooks creation - Learn how to extract component logic into reusable custom hooks that start with 'use' prefix.",
-    timeInSeconds: 738,
-    capturedAt: new Date(),
-    imageUrl: "/placeholder.svg?height=120&width=200&text=Custom+Hooks",
-  },
-]
 
 interface VideoSectionProps {
   screenshots: Screenshot[]
@@ -71,7 +32,7 @@ interface VideoSectionProps {
 
 export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2bM" }: VideoSectionProps) {
   const [mode, setMode] = useState<Mode>("video")
-  const [notesView, setNotesView] = useState<NotesView>("full")
+  const [notesView, setNotesView] = useState<NotesView>("grid")
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0)
   const [description, setDescription] = useState("")
   const [newNoteTimestamp, setNewNoteTimestamp] = useState("")
@@ -85,7 +46,7 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
   })
 
   // Initialize with mock data if no screenshots provided
-  const currentScreenshots = screenshots.length > 0 ? screenshots : initialScreenshots
+  const currentScreenshots = screenshots
   const currentNote = currentScreenshots[currentNoteIndex] || null
 
   // Handle mode switching
