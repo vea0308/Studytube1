@@ -116,7 +116,7 @@ export function LandingPage() {
     {
       name: "Sarah Chen",
       role: "Computer Science Student",
-      content: "This tool transformed how I study programming tutorials. The AI referencing is incredible!",
+      content: "This tool transformed how I study programming tutorials. The AI referencing is incredible!", 
       rating: 5,
       avatar: "SC",
     },
