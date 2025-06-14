@@ -45,69 +45,69 @@ export function LandingPage() {
       icon: Play,
       title: "Smart Video Learning",
       description: "Watch YouTube videos with intelligent note-taking capabilities and timestamp tracking.",
-      gifUrl: "/placeholder.svg?height=200&width=350",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455082021-0387e2d6-81c4-4e8f-9545-658513cbb181.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjE4NzgsIm5iZiI6MTc0OTg2MTU3OCwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDgyMDIxLTAzODdlMmQ2LTgxYzQtNGU4Zi05NTQ1LTY1ODUxM2NiYjE4MS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMDM5MzhaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT00NDAyZGM5NzRmZDUzODVlYmU1MjZjZGI0M2I1Y2U2MDZkNWNiYTA2ZDAyMzI5OTFhM2UwOTZlZWRkOTU1ZDllJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.fBkAn95X3__ow4BL27dDlBEmIFvz77DNtKP6oth2jmg",
       gifAlt: "Video player with timestamp notes",
     },
     {
       icon: Brain,
       title: "AI Study Assistant",
       description: "Get instant help with AI that understands your notes and can answer specific questions.",
-      gifUrl: "/placeholder.svg?height=200&width=350",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455083090-43ddf5aa-7545-4e2c-b821-c784bf1d3106.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjIyOTEsIm5iZiI6MTc0OTg2MTk5MSwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDgzMDkwLTQzZGRmNWFhLTc1NDUtNGUyYy1iODIxLWM3ODRiZjFkMzEwNi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMDQ2MzFaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1jNzg2MmExNTZlMWM1ZDBjNDVmNTVkNGVhNmU2NmM0NmI0ZTg1MWNlN2YyYTk0NTRkNTlmNWFiMzdlYjliNGMyJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.pAL6RyMO2SV7h45wfCkOIBLiibnQgKrgiQgoxHPga5g",
       gifAlt: "AI assistant answering questions",
     },
     {
       icon: MessageCircle,
       title: "Note Referencing",
       description: "Reference specific notes in AI conversations using @note1, @note2 syntax for targeted help.",
-      gifUrl: "/placeholder.svg?height=200&width=350",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455084179-45a38783-d1e2-4602-95b8-d2c9e898c9ec.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjI2MjUsIm5iZiI6MTc0OTg2MjMyNSwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDg0MTc5LTQ1YTM4NzgzLWQxZTItNDYwMi05NWI4LWQyYzllODk4YzllYy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMDUyMDVaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1jZTQ1OTY2MzJjN2I2MTU3MTYxZmIzZmFiZDY2YjI1NDJiZDU3ODU2NDM5MzM0MDJlZmNlYjYyMzM0OGI4YmIwJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.otG6pX73ChNxG8ZzE1NWzKoUAIYXOPjlO5Q85KN-I6w",
       gifAlt: "Note referencing in action",
     },
     {
       icon: FileText,
       title: "Organized Study Notes",
       description: "Create, edit, and organize timestamped notes with easy-to-use grid and fullscreen views.",
-      gifUrl: "/placeholder.svg?height=200&width=350",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455084179-45a38783-d1e2-4602-95b8-d2c9e898c9ec.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjI4OTcsIm5iZiI6MTc0OTg2MjU5NywicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDg0MTc5LTQ1YTM4NzgzLWQxZTItNDYwMi05NWI4LWQyYzllODk4YzllYy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMDU2MzdaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1jOTY5ZDBlODU5MzJiM2I0ZWI2MDI0N2EwYWI0M2M2OWZiZjgxOWMwYmM2ZmIzYzRjOWZiNWNiMzE0ZjE3ZGZkJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.aGXfX9__yTnjlzAV5cgPei3sXYIdAoQBJIG8rh-z1WM",
       gifAlt: "Study notes organization",
     },
     {
       icon: Zap,
       title: "Instant Flashcards",
       description: "Generate flashcards from your notes and video content for effective memorization.",
-      gifUrl: "/placeholder.svg?height=200&width=350",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455085449-3925714e-418e-4fed-8a74-5cd208a38ecc.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjMwMzksIm5iZiI6MTc0OTg2MjczOSwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDg1NDQ5LTM5MjU3MTRlLTQxOGUtNGZlZC04YTc0LTVjZDIwOGEzOGVjYy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMDU4NTlaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1lYjFmZDAwZDUwMTE1NmY0Y2U2YmMxZmQ3YjFjMmRhNjEzNjIzMWI4MzUxNGE2MzZlM2UxMmJjMTczMDRhNDVlJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.orQy8cKyyVKxmc5wAp2Pr9e8a7865dlU3jyQY4nKV8k",
       gifAlt: "Flashcard generation demo",
     },
     {
       icon: Target,
-      title: "Focused Learning",
+      title: "Interactive Learning",
       description: "Stay focused with distraction-free interface designed specifically for educational content.",
-      gifUrl: "/placeholder.svg?height=200&width=350",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455085784-59c27a8c-76b8-4c1b-8b59-727a26344acf.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjMxNTIsIm5iZiI6MTc0OTg2Mjg1MiwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDg1Nzg0LTU5YzI3YThjLTc2YjgtNGMxYi04YjU5LTcyN2EyNjM0NGFjZi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMTAwNTJaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT04ZTNiY2Y4MzZhZWI0YWMzOTllMzI1NDhhYTA4YjFkMjljZTM1ZDliNjUyYWRiYjIyYTFkYTA0ZWVkMGE4YjJkJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.oI7xO6R-D6saZxhcfj-v7KBgeGauK3s2Dt7UzHHwQyk",
       gifAlt: "Focused learning interface",
     },
   ]
 
   const howToUseSteps = [
     {
-      title: "Load any YouTube video",
-      description: "Simply paste a YouTube URL or search for content directly within the app.",
-      gifUrl: "/placeholder.svg?height=300&width=500",
+      title: "Start Watching any YouTube video",
+      description: "Simply Click on Extension button present in Youtube Control Menu.",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455087059-64279402-1a35-43e0-a44b-40e0d0ca9abc.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjM1NjMsIm5iZiI6MTc0OTg2MzI2MywicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDg3MDU5LTY0Mjc5NDAyLTFhMzUtNDNlMC1hNDRiLTQwZTBkMGNhOWFiYy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMTA3NDNaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT03NDI2NWU1OTZjN2U1YzlmZmYxYTQ2NTZmYTJkNmQxYmZhNGJmMjcxYWJjZGY5Mjg5NDQyZDcwZjk5OTYzYTc3JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.ZfEthV7czz3lKuTZ8-rBSIcjle-seyNu2gmRLy5ucuc",
       gifAlt: "Loading a YouTube video",
     },
     {
-      title: "Take timestamped notes",
+      title: "Take timestamped notes using Extension",
       description: "Click to capture important moments with automatic timestamps and add your notes.",
-      gifUrl: "/placeholder.svg?height=300&width=500",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455082021-0387e2d6-81c4-4e8f-9545-658513cbb181.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjE4NzgsIm5iZiI6MTc0OTg2MTU3OCwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDgyMDIxLTAzODdlMmQ2LTgxYzQtNGU4Zi05NTQ1LTY1ODUxM2NiYjE4MS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMDM5MzhaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT00NDAyZGM5NzRmZDUzODVlYmU1MjZjZGI0M2I1Y2U2MDZkNWNiYTA2ZDAyMzI5OTFhM2UwOTZlZWRkOTU1ZDllJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.fBkAn95X3__ow4BL27dDlBEmIFvz77DNtKP6oth2jmg",
       gifAlt: "Taking timestamped notes",
     },
     {
       title: "Chat with AI about specific notes",
       description: "Reference your notes with @note1, @note2 syntax to get targeted AI assistance.",
-      gifUrl: "/placeholder.svg?height=300&width=500",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455084179-45a38783-d1e2-4602-95b8-d2c9e898c9ec.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjI2MjUsIm5iZiI6MTc0OTg2MjMyNSwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDg0MTc5LTQ1YTM4NzgzLWQxZTItNDYwMi05NWI4LWQyYzllODk4YzllYy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMDUyMDVaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1jZTQ1OTY2MzJjN2I2MTU3MTYxZmIzZmFiZDY2YjI1NDJiZDU3ODU2NDM5MzM0MDJlZmNlYjYyMzM0OGI4YmIwJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.otG6pX73ChNxG8ZzE1NWzKoUAIYXOPjlO5Q85KN-I6w",
       gifAlt: "Chatting with AI about notes",
     },
     {
       title: "Generate study materials",
       description: "Create flashcards, summaries, and study guides from your notes with one click.",
-      gifUrl: "/placeholder.svg?height=300&width=500",
+      gifUrl: "https://private-user-images.githubusercontent.com/119877487/455085784-59c27a8c-76b8-4c1b-8b59-727a26344acf.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk4NjMxNTIsIm5iZiI6MTc0OTg2Mjg1MiwicGF0aCI6Ii8xMTk4Nzc0ODcvNDU1MDg1Nzg0LTU5YzI3YThjLTc2YjgtNGMxYi04YjU5LTcyN2EyNjM0NGFjZi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNjE0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDYxNFQwMTAwNTJaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT04ZTNiY2Y4MzZhZWI0YWMzOTllMzI1NDhhYTA4YjFkMjljZTM1ZDliNjUyYWRiYjIyYTFkYTA0ZWVkMGE4YjJkJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.oI7xO6R-D6saZxhcfj-v7KBgeGauK3s2Dt7UzHHwQyk",
       gifAlt: "Generating study materials",
     },
   ]
@@ -156,17 +156,12 @@ export function LandingPage() {
             {/* Logo */}
             <div className="flex items-center space-x-4">
               <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600">
-                  <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13m0-13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xl font-semibold text-foreground whitespace-nowrap">StudyTube</span>
                 </div>
-                <span className="text-xl font-semibold text-gray-900 dark:text-white">StudyTube</span>
               </motion.div>
 
               {/* Desktop Navigation */}
@@ -352,7 +347,7 @@ export function LandingPage() {
                         alt={feature.gifAlt}
                         width={350}
                         height={200}
-                        className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full object-cover object-top transition-transform duration-300 group-hover:scale-105 max-h-[200px]"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
                         <div className="p-4 text-white">

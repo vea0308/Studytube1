@@ -150,8 +150,7 @@ export function YouTubePlayer({
         <div className="relative w-full h-full">
           <div
             ref={playerRef}
-            className="absolute inset-0 rounded-lg overflow-hidden"
-            style={{ minHeight: "200px" }}
+            className="absolute inset-0 rounded-lg overflow-hidden w-full mx-auto"
             id="youtube-player-container"
           />
         </div>

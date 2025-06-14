@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Settings, Moon, Sun, Menu, X } from "lucide-react"
+import { Settings, Moon, Sun, Menu, X, FileText } from "lucide-react"
 import { useTheme } from "next-themes"
 import { SettingsModal } from "@/components/settings-modal"
 import { useState } from "react"
@@ -26,17 +26,12 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
             {/* Logo */}
             <a href="/" className="flex items-center space-x-4">
               <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600">
-                  <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xl font-semibold text-foreground whitespace-nowrap">StudyTube</span>
                 </div>
-                <span className="text-xl font-semibold text-gray-900 dark:text-white">StudyTube</span>
               </motion.div>
 
               {/* Desktop Navigation */}
