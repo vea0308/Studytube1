@@ -84,10 +84,11 @@ Create flashcards, summaries, and study guides from your notes with one click.
 <table>
   <tr>
     <td><img src="https://github.com/user-attachments/assets/59c27a8c-76b8-4c1b-8b59-727a26344acf" width="100%"/></td>
-    <td><img src="https://github.com/user-attachments/assets/3925714e-418e-4fed-8a74-5cd208a38ecc6" width="100%"/></td>
+    <td><img src="https://github.com/user-attachments/assets/c72b25a0-8f0d-469e-9d21-43d93e67215d" width="100%"/></td>
   </tr>
 </table>
 ---
+
 
 
 ## 🌍 Civic Auth (Web3) Impact
