@@ -73,7 +73,7 @@ export function LandingPage() {
       icon: Zap,
       title: "Instant Flashcards",
       description: "Generate flashcards from your notes and video content for effective memorization.",
-      gifUrl: "https://github.com/user-attachments/assets/3925714e-418e-4fed-8a74-5cd208a38ecc6",
+      gifUrl: "https://github.com/user-attachments/assets/c72b25a0-8f0d-469e-9d21-43d93e67215d",
       gifAlt: "Flashcard generation demo",
     },
     {
