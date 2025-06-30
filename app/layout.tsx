@@ -12,11 +12,6 @@ export const metadata: Metadata = {
   title: "StudyTube - AI-Powered YouTube Learning Platform",
   description: "Transform how you learn from YouTube videos with AI-powered notes, chat, and study tools. Take timestamped notes, get AI assistance, and create flashcards.",
   generator: 'v0.dev',
-  icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
-  },
 }
 
 export default function RootLayout({

@@ -5,8 +5,8 @@ export const runtime = 'edge'
 
 // Image metadata
 export const size = {
-  width: 32,
-  height: 32,
+  width: 192,
+  height: 192,
 }
 export const contentType = 'image/png'
 
@@ -25,13 +25,13 @@ export default function Icon() {
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
-          borderRadius: '6px',
+          borderRadius: '24px',
         }}
       >
         {/* Using a simple document icon representation */}
         <svg
-          width="18"
-          height="18"
+          width="96"
+          height="96"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

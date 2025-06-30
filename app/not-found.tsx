@@ -1,24 +1,19 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Home } from "lucide-react"
+import { Home, FileText } from "lucide-react"
 
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background px-4">
       <div className="text-center max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center space-x-3 mb-8">
-          <Image
-            src="/logo.png"
-            alt="StudyTube Logo"
-            width={48}
-            height={48}
-            className="w-12 h-12 object-contain"
-          />
-          <span className="text-2xl font-semibold text-foreground">StudyTube</span>
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded flex items-center justify-center flex-shrink-0">
+            <FileText className="w-3 h-3 text-white" />
+          </div>
+          <span className="text-sm font-semibold text-foreground whitespace-nowrap">StudyTube</span>
         </div>
 
         {/* 404 Message */}

@@ -156,17 +156,11 @@ export function LandingPage() {
             {/* Logo */}
             <div className="flex items-center space-x-4">
               <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0">
-                    <Image
-                      src="/logo.png"
-                      alt="StudyTube Logo"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 object-contain"
-                    />
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-3 h-3 text-white" />
                   </div>
-                  <span className="text-xl font-semibold text-foreground whitespace-nowrap">StudyTube</span>
+                  <span className="text-sm font-semibold text-foreground whitespace-nowrap">StudyTube</span>
                 </div>
               </motion.div>
 
@@ -557,16 +551,12 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0">
-                <Image
-                  src="/logo.png"
-                  alt="StudyTube Logo"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 object-contain"
-                />
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-foreground whitespace-nowrap">StudyTube</span>
               </div>
-              <span className="text-base font-semibold text-black dark:text-white">StudyTube</span>
             </div>
             <div className="flex items-center space-x-6">
               <a href="#" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
