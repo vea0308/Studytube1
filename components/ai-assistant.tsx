@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useToast } from "@/components/ui/use-toast"
 import ReactMarkdown from "react-markdown"
 import {
   MessageCircle,
@@ -110,8 +111,9 @@ useEffect(() => {
 > **Note**: Remember to always include dependencies in the useEffect dependency array to avoid bugs.`
 
 export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestampClick }: AIAssistantProps) {
+  const { toast } = useToast()
   const [mode, setMode] = useState<AssistantMode>("chat")
-  const [provider, setProvider] = useState<AIProvider>("openai")
+  const [provider, setProvider] = useState<AIProvider>("gemini")
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
   const [currentFlashcard, setCurrentFlashcard] = useState(0) 
@@ -223,12 +225,21 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
     if (!inputValue.trim() || isLoading) return
 
     if (!checkApiKey(provider)) {
+      toast({
+        title: "API Key Required",
+        description: `Please set up your ${provider.toUpperCase()} API key in settings to use the AI assistant.`,
+        variant: "destructive",
+      })
       setMissingProvider(provider)
       setShowApiKeyDialog(true)
       return
     }
 
     const { enhancedPrompt, referencedNotes } = parseNoteReferences(inputValue)
+
+    // Get the user's API key from localStorage
+    const savedKeys = localStorage.getItem("youtube-study-api-keys")
+    const apiKey = savedKeys ? JSON.parse(savedKeys)[provider] : null
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -266,10 +277,12 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`, // Pass user's API key in headers
         },
         body: JSON.stringify({ 
           text: enhancedPrompt,
           videoId:videoId,
+          provider: provider, // Tell the API which provider to use
           context: referencedNotes.length > 0 ? {
             notes: referencedNotes.map(note => ({
               timestamp: note.timestamp,
@@ -279,8 +292,62 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
         }),
       })
 
+      if (!response.ok) {
+        let errorMessage = "Failed to get response from AI"
+        
+        try {
+          const errorData = await response.json()
+          
+          // Handle different error response formats
+          if (errorData.error) {
+            errorMessage = errorData.error
+          } else if (errorData.details && Array.isArray(errorData.details)) {
+            // Handle Google API error format with details array
+            const detail = errorData.details.find((d: any) => d.message)
+            if (detail && detail.message) {
+              errorMessage = detail.message
+            }
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          }
+          
+          // Check for specific API key related errors
+          if (errorMessage.toLowerCase().includes('api key not valid') || 
+              errorMessage.toLowerCase().includes('invalid api key') ||
+              errorMessage.toLowerCase().includes('please pass a valid api key')) {
+            errorMessage = `Invalid ${provider.toUpperCase()} API key. Please check your API key in settings and make sure it's valid.`
+          }
+          
+        } catch {
+          // If we can't parse JSON, use status-based messages
+          if (response.status === 401) {
+            errorMessage = `Invalid ${provider.toUpperCase()} API key. Please check your API key in settings.`
+          } else if (response.status === 403) {
+            errorMessage = "Access denied. Please verify your API key permissions."
+          } else if (response.status === 429) {
+            errorMessage = "Rate limit exceeded. Please try again later."
+          } else if (response.status >= 500) {
+            errorMessage = "AI service is temporarily unavailable. Please try again."
+          }
+        }
+        
+        toast({
+          title: "API Error",
+          description: errorMessage,
+          variant: "destructive",
+        })
+        
+        throw new Error(errorMessage)
+      }
+
       if (!response.body) {
-        throw new Error("No response body")
+        const errorMsg = "No response received from AI service"
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        })
+        throw new Error(errorMsg)
       }
 
       const reader = response.body.getReader()
@@ -302,12 +369,40 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
         // Do not auto-scroll during streaming/assistant messages
       }
     } catch (error) {
-      console.error("Error calling Gemini API:", error)
+      console.error("Error calling AI API:", error)
+      
+      // Check if this is an API key error that we've already handled
+      const isApiKeyError = error instanceof Error && (
+        error.message.toLowerCase().includes('invalid') && error.message.toLowerCase().includes('api key')
+      )
+      
+      // Only show additional toast if we haven't already shown an API key error
+      if (!isApiKeyError) {
+        // Handle network errors and other unexpected errors
+        let userFriendlyMessage = "Unable to connect to AI service. Please check your internet connection and try again."
+        
+        if (error instanceof TypeError && error.message.includes("fetch")) {
+          userFriendlyMessage = "Network error. Please check your internet connection."
+        } else if (error instanceof Error) {
+          // If we have a specific error message that's not generic, use it
+          if (!error.message.includes("Failed to get response") && 
+              !error.message.includes("No response received")) {
+            userFriendlyMessage = error.message
+          }
+        }
+        
+        toast({
+          title: "Connection Error",
+          description: userFriendlyMessage,
+          variant: "destructive",
+        })
+      }
+      
       setMessages(prev => prev.map(msg => 
         msg.id === assistantMessageId 
           ? { 
               ...msg, 
-              content: "⚠️ Sorry, there was an error processing your request.", 
+              content: "⚠️ Sorry, there was an error processing your request. Please try again.", 
               isLoading: false 
             } 
           : msg

@@ -5,15 +5,14 @@ import { index } from "@/lib/pinecone";
 import ChatPrompt from "@/Prompts/chat-prompt";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API!);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+import OpenAI from "openai";
 
 // Type definitions for better type safety
 type RequestData = {
   text: string;
   videoId: string;
   context?: string;
+  provider?: string;
 };
 
 type APIResponse = {
@@ -24,11 +23,21 @@ type APIResponse = {
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {
-    // Check if API key is available
-    if (!process.env.GOOGLE_GEMINI_API || process.env.GOOGLE_GEMINI_API === 'your_gemini_api_key_here') {
+    // Extract API key from Authorization header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: "Google Gemini API key is not configured. Please add GOOGLE_GEMINI_API to your .env.local file." },
-        { status: 500 }
+        { error: "API key is required. Please set your API key in the settings." },
+        { status: 401 }
+      );
+    }
+    
+    const apiKey = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    if (!apiKey || apiKey === 'your_api_key_here') {
+      return NextResponse.json(
+        { error: "Valid API key is required. Please set your API key in the settings." },
+        { status: 401 }
       );
     }
 
@@ -41,7 +50,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const data: RequestData = await req.json();
-    const { text, videoId, context = "" } = data;
+    const { text, videoId, context = "", provider = "gemini" } = data;
 
     if (!text || !videoId) {
       return NextResponse.json(
@@ -50,64 +59,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    // // Store video if not already stored (with error handling)
-    // const storageResult: APIResponse = await storeVideoInPinecone(videoId);
-    // if (!storageResult.success && storageResult.message !== "Video already stored") {
-    //   console.error("Storage error:", storageResult.message);
-    //   return NextResponse.json(
-    //     { error: "Failed to process video" },
-    //     { status: 500 }
-    //   );
-    // }
-
-    // Get relevant context from Pinecone using two-phase retrieval
-    // const userVector = await embedText(text, "QUERY");
-
-    // // Phase 1: Get comprehensive content from text chunks
-    // const textChunkQuery = await index
-    //   .namespace(videoId)
-    //   .query({
-    //     vector: userVector,
-    //     topK: 3,
-    //     includeMetadata: true,
-    //     filter: { type: "text_chunk" }
-    //   });
-
-    // // Phase 2: Get precise timestamps from transcript segments
-    // const timestampQuery = await index
-    //   .namespace(videoId)
-    //   .query({
-    //     vector: userVector,
-    //     topK: 10,
-    //     includeMetadata: true,
-    //     filter: { type: "transcript_segment" }
-    //   });
-
-    // // Extract comprehensive content for better answers
-    // const comprehensiveContent = textChunkQuery.matches
-    //   ?.map(match => match.metadata?.text)
-    //   .filter(Boolean)
-    //   .join("\n\n") || "";
-
-    // // Extract relevant timestamps with content and format as subtitle data
-    // const subtitleData = timestampQuery.matches
-    //   ?.map(match => {
-    //     const metadata = match.metadata;
-    //     if (metadata && metadata.type === 'transcript_segment') {
-    //       return {
-    //         start: metadata.startTime,
-    //         text: metadata.text,
-    //         duration: metadata.duration || 0,
-    //         formattedTime: metadata.formattedStartTime
-    //       };
-    //     }
-    //     return null;
-    //   })
-    //   .filter(Boolean) || [];
-
-    // Use the new ChatPrompt function with proper parameters
-    // console.log("Subtitle data:", subtitleData);
-    // console.log("User question:", text);
+    // Get transcript data
     const subtitleData = await getYoutubeTranscript(videoId);
     console.log("transcript ", subtitleData);
 
@@ -121,27 +73,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       context    // userContext
     );
 
-    // Stream the response
-    const streamResult = await model.generateContentStream(prompt);
-    const encoder = new TextEncoder();
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of streamResult.stream) {
-            const text = chunk.text();
-            if (text) {
-              controller.enqueue(encoder.encode(text));
-            }
-          }
-        } catch (error) {
-          console.error("Stream error:", error);
-          controller.error(error);
-        } finally {
-          controller.close();
-        }
-      },
-    });
+    // Create stream based on provider
+    let stream: ReadableStream;
+    
+    if (provider === "openai") {
+      stream = await createOpenAIStream(apiKey, prompt);
+    } else if (provider === "groq") {
+      stream = await createGroqStream(apiKey, prompt);
+    } else {
+      // Default to Gemini
+      stream = await createGeminiStream(apiKey, prompt);
+    }
 
     return new NextResponse(stream, {
       headers: {
@@ -152,9 +94,163 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   } catch (error) {
     console.error("API error:", error);
+    
+    // Handle specific API errors
+    if (error instanceof Error) {
+      // Check for API key related errors
+      if (error.message.includes('API key not valid') || 
+          error.message.includes('Invalid API key') ||
+          error.message.includes('API_KEY_INVALID') ||
+          error.message.includes('authentication')) {
+        return NextResponse.json(
+          { 
+            error: "Invalid API key. Please check your API key in settings and make sure it's valid.",
+            details: [{ message: error.message }]
+          },
+          { status: 401 }
+        );
+      }
+      
+      // Check for rate limiting errors
+      if (error.message.includes('rate limit') || error.message.includes('quota')) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Please try again later." },
+          { status: 429 }
+        );
+      }
+      
+      // Check for model/permission errors
+      if (error.message.includes('permission') || error.message.includes('access')) {
+        return NextResponse.json(
+          { error: "Access denied. Please verify your API key permissions." },
+          { status: 403 }
+        );
+      }
+      
+      // For other known errors, return the actual error message
+      return NextResponse.json(
+        { 
+          error: error.message,
+          details: [{ message: error.message }]
+        },
+        { status: 400 }
+      );
+    }
+    
+    // Fallback for unknown errors
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// Helper function to create Gemini stream
+async function createGeminiStream(apiKey: string, prompt: string): Promise<ReadableStream> {
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+    
+    const streamResult = await model.generateContentStream(prompt);
+    const encoder = new TextEncoder();
+
+    return new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of streamResult.stream) {
+            const text = chunk.text();
+            if (text) {
+              controller.enqueue(encoder.encode(text));
+            }
+          }
+        } catch (error) {
+          console.error("Gemini stream error:", error);
+          controller.error(error);
+        } finally {
+          controller.close();
+        }
+      },
+    });
+  } catch (error) {
+    // Re-throw the error so it can be handled by the main error handler
+    console.error("Gemini initialization error:", error);
+    throw error;
+  }
+}
+
+// Helper function to create OpenAI stream
+async function createOpenAIStream(apiKey: string, prompt: string): Promise<ReadableStream> {
+  try {
+    const openai = new OpenAI({ apiKey });
+    
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      stream: true,
+    });
+    
+    const encoder = new TextEncoder();
+
+    return new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              controller.enqueue(encoder.encode(content));
+            }
+          }
+        } catch (error) {
+          console.error("OpenAI stream error:", error);
+          controller.error(error);
+        } finally {
+          controller.close();
+        }
+      },
+    });
+  } catch (error) {
+    // Re-throw the error so it can be handled by the main error handler
+    console.error("OpenAI initialization error:", error);
+    throw error;
+  }
+}
+
+// Helper function to create Groq stream (using OpenAI-compatible API)
+async function createGroqStream(apiKey: string, prompt: string): Promise<ReadableStream> {
+  try {
+    const groq = new OpenAI({
+      apiKey,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+    
+    const stream = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      stream: true,
+    });
+    
+    const encoder = new TextEncoder();
+
+    return new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              controller.enqueue(encoder.encode(content));
+            }
+          }
+        } catch (error) {
+          console.error("Groq stream error:", error);
+          controller.error(error);
+        } finally {
+          controller.close();
+        }
+      },
+    });
+  } catch (error) {
+    // Re-throw the error so it can be handled by the main error handler
+    console.error("Groq initialization error:", error);
+    throw error;
   }
 }
