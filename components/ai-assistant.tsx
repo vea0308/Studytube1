@@ -119,16 +119,46 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false)
   const [missingProvider, setMissingProvider] = useState<AIProvider | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  // Auto-scroll to bottom for any new message, unless user has scrolled up
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    if (!isUserScrolledUp) {
+      scrollToBottom();
+    }
+  }, [messages, isUserScrolledUp]);
+
+  // Handle scroll event to detect if user scrolled up during streaming
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current
+    if (!messagesContainer) return
+
+    let lastScrollTop = messagesContainer.scrollTop
+
+    const handleScroll = () => {
+      const currentScrollTop = messagesContainer.scrollTop
+      
+      // If user scrolled up during streaming, stop auto-scroll
+      if (isLoading && currentScrollTop < lastScrollTop) {
+        setIsUserScrolledUp(true)
+      }
+      
+      lastScrollTop = currentScrollTop
+    }
+
+    messagesContainer.addEventListener('scroll', handleScroll, { passive: true })
+    
+    return () => {
+      messagesContainer.removeEventListener('scroll', handleScroll)
+    }
+  }, [isLoading])
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current
@@ -214,8 +244,10 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
       referencedNotes,
     }
 
+
     setInputValue("")
     setMessages((prev) => [...prev, userMessage])
+    setIsUserScrolledUp(false) // Resume auto-scroll for this new user message
 
     const assistantMessageId = (Date.now() + 1).toString()
     const loadingMessage: Message = {
@@ -267,7 +299,7 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
             : msg
         ))
         
-        scrollToBottom()
+        // Do not auto-scroll during streaming/assistant messages
       }
     } catch (error) {
       console.error("Error calling Gemini API:", error)
@@ -282,6 +314,7 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
       ))
     } finally {
       setIsLoading(false)
+      // Don't reset scroll state - let user control it
     }
   }
 
@@ -309,6 +342,9 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
   }
 
   const handleTimestampClick = (timestamp: number) => {
+    // Permanently prevent auto-scroll when timestamp is clicked
+    setIsUserScrolledUp(true)
+    
     if (onTimestampClick) {
       onTimestampClick(timestamp)
     }
@@ -354,7 +390,7 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
                 e.preventDefault();
                 e.stopPropagation();
                 console.log(`Timestamp button clicked: ${seconds}s (${displayTime})`);
-                onTimestampClick?.(seconds);
+                handleTimestampClick(seconds); // Use local handler to prevent auto-scroll
               }}
               className="inline-flex items-center px-1.5 py-0.5 mx-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-105 transform transition-all duration-150 cursor-pointer underline decoration-blue-400 hover:decoration-blue-600"
               title={`Jump to ${displayTime}`}
@@ -445,7 +481,7 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
         {mode === "chat" && (
           <div className="flex flex-col h-full">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground space-y-4 mt-8">
                   <MessageCircle className="w-12 h-12 mx-auto opacity-50" />
@@ -517,6 +553,7 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
                   </div>
                 </div>
               ))}
+              
               <div ref={messagesEndRef} />
             </div>
 

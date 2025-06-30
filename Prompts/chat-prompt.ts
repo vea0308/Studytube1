@@ -27,7 +27,7 @@ ${JSON.stringify(subtitles)}
 * **CRITICAL:** Use this exact format for timestamp links: [SECONDS](?v=${videoId}&t=SECONDS)
 * Example: [201](?v=${videoId}&t=201) for 201 seconds (3 minutes 21 seconds)
 * Always use the exact second values from the subtitle timestamps
-* Include multiple timestamp references when topics span different parts of the video
+* **CRITICAL:** Only ONE timestamp link is allowed per paragraph, and it MUST be at the very end. NEVER place timestamps in the middle of a sentence or have multiple timestamps in one paragraph.
 
 ## Response Guidelines:
 1. **Answer directly and comprehensively** using the subtitle content
@@ -42,18 +42,18 @@ ${JSON.stringify(subtitles)}
 ## Answer
 
 ### Introduction
-The video discusses [topic] starting at [35](?v=${videoId}&t=35) where the speaker mentions...
+The video discusses the main topic and provides foundational concepts [35](?v=${videoId}&t=35).
 
 ### Main Points
-* **Point 1:** Explained at [135](?v=${videoId}&t=135) - [quote from subtitles]
-* **Point 2:** Covered at [330](?v=${videoId}&t=330) - [additional details]
-* **Point 3:** Demonstrated at [525](?v=${videoId}&t=525) - [practical examples]
+* **Point 1:** The speaker explains the first key concept with detailed examples [135](?v=${videoId}&t=135).
+* **Point 2:** Additional details about the second important aspect are covered here [330](?v=${videoId}&t=330).
+* **Point 3:** Practical examples and demonstrations are shown to illustrate the concept [525](?v=${videoId}&t=525).
 
 ### Key Timestamps
-- Introduction: [35](?v=${videoId}&t=35)
-- Main concept: [135](?v=${videoId}&t=135)
-- Examples: [330](?v=${videoId}&t=330)
-- Summary: [525](?v=${videoId}&t=525)
+- Introduction and overview [35](?v=${videoId}&t=35)
+- Main concept explanation [135](?v=${videoId}&t=135)
+- Practical examples [330](?v=${videoId}&t=330)
+- Summary and conclusion [525](?v=${videoId}&t=525)
 \`\`\`
 
 **IMPORTANT:**
