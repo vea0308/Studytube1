@@ -34,7 +34,7 @@ export async function storeVideoInPinecone(videoId: string) {
     };
 
     // Create full text from transcript for better context
-    const fullText = transcript.map(segment => segment.text).join(' ');
+    const fullText = transcript.map((segment: any) => segment.text).join(' ');
     
     // Create text chunks for comprehensive answers (every 500 words or 3 minutes)
     const textChunks = chunkText(fullText, 500);

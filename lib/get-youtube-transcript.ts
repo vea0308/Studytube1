@@ -19,6 +19,7 @@ export async function getYoutubeTranscript(videoId: string): Promise<any[]> {
 
   try {
     const transcript = await TranscriptAPI.getTranscript(videoId);
+    console.log("transcript ",transcript);
     transcriptCache[videoId] = {
       data: transcript,
       expiry: now + CACHE_TTL_MS,

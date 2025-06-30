@@ -1,6 +1,4 @@
-import { storeVideoInPinecone } from "@/app/actions/storeVideo";
 import { embedText } from "@/lib/embedding";
-import { getYoutubeTranscript } from "@/lib/get-youtube-transcript";
 import { index } from "@/lib/pinecone";
 import ChatPrompt from "@/Prompts/chat-prompt";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -13,6 +11,7 @@ type RequestData = {
   videoId: string;
   context?: string;
   provider?: string;
+  transcript?: any[]; // Add transcript to the request data
 };
 
 type APIResponse = {
@@ -50,7 +49,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const data: RequestData = await req.json();
-    const { text, videoId, context = "", provider = "gemini" } = data;
+    const { text, videoId, context = "", provider = "gemini", transcript } = data;
 
     if (!text || !videoId) {
       return NextResponse.json(
@@ -59,9 +58,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    // Get transcript data
-    const subtitleData = await getYoutubeTranscript(videoId);
-    console.log("transcript ", subtitleData);
+    // Use provided transcript data - transcript is now required
+    if (!transcript || transcript.length === 0) {
+      return NextResponse.json(
+        { error: "Transcript data is required. Please ensure the video transcript is loaded." },
+        { status: 400 }
+      );
+    }
+
+    const subtitleData = transcript;
+    console.log("Using provided transcript data");
 
     const prompt = ChatPrompt(
       subtitleData,

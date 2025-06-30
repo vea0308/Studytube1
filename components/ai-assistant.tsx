@@ -45,6 +45,7 @@ interface AIAssistantProps {
   screenshots: Screenshot[]
   videoId: string
   onTimestampClick?: (timeInSeconds: number) => void
+  transcript: any[] | null
 }
 
 const mockFlashcards: Flashcard[] = [
@@ -65,52 +66,7 @@ const mockFlashcards: Flashcard[] = [
   },
 ]
 
-const mockSummary = `# React Hooks Tutorial Summary
-
-## Key Concepts Covered
-
-### 1. Introduction to Hooks (0:00 - 2:30)
-- Hooks were introduced in React 16.8
-- Allow you to use state and lifecycle features in functional components
-- Enable better code reuse and organization
-
-### 2. useState Hook (2:30 - 6:00)
-- Most commonly used hook for managing component state
-- Returns current state value and setter function
-- Can be used with primitive values, objects, and arrays
-
-### 3. useEffect Hook (6:00 - 10:00)
-- Handles side effects in functional components
-- Replaces componentDidMount, componentDidUpdate, and componentWillUnmount
-- Dependency array controls when effect runs
-
-### 4. Custom Hooks (10:00 - 15:42)
-- Extract component logic into reusable functions
-- Must start with "use" prefix
-- Can call other hooks internally
-- Promote code reuse across components
-
-## Best Practices
-- Always use hooks at the top level of components
-- Don't call hooks inside loops, conditions, or nested functions
-- Use multiple state variables instead of one complex object when possible
-- Clean up effects to prevent memory leaks
-
-## Code Examples
-
-\`\`\`javascript
-// useState example
-const [count, setCount] = useState(0);
-
-// useEffect example
-useEffect(() => {
-  document.title = \`Count: \${count}\`;
-}, [count]);
-\`\`\`
-
-> **Note**: Remember to always include dependencies in the useEffect dependency array to avoid bugs.`
-
-export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestampClick }: AIAssistantProps) {
+export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestampClick, transcript }: AIAssistantProps) {
   const { toast } = useToast()
   const [mode, setMode] = useState<AssistantMode>("chat")
   const [provider, setProvider] = useState<AIProvider>("gemini")
@@ -122,9 +78,171 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
   const [missingProvider, setMissingProvider] = useState<AIProvider | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false)
+  const [generatedSummary, setGeneratedSummary] = useState<string>("")
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const summaryContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+  // Generate summary from transcript
+  const generateSummary = async () => {
+    if (!transcript || transcript.length === 0) {
+      toast({
+        title: "No Transcript Available",
+        description: "Cannot generate summary without video transcript.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!checkApiKey(provider)) {
+      toast({
+        title: "API Key Required",
+        description: `Please set up your ${provider.toUpperCase()} API key in settings to generate summary.`,
+        variant: "destructive",
+      })
+      setMissingProvider(provider)
+      setShowApiKeyDialog(true)
+      return
+    }
+
+    setSummaryLoading(true)
+    
+    try {
+      const savedKeys = localStorage.getItem("youtube-study-api-keys")
+      const apiKey = savedKeys ? JSON.parse(savedKeys)[provider] : null
+
+      const summaryPrompt = `You are StudyTube AI, a helpful learning assistant. Generate a comprehensive summary of this YouTube video based on the transcript.
+
+**Subtitles (with timestamps):**
+\`\`\`json
+${JSON.stringify(transcript)}
+\`\`\`
+
+**Video ID:** ${videoId}
+
+**INSTRUCTIONS:**
+
+Generate a well-structured markdown summary with the following requirements:
+
+## Summary Structure:
+* **Title (# heading):** Create an engaging title for the video content
+* **Overview (## heading):** Brief 2-3 sentence overview of the main topic  
+* **Key Topics (## headings):** Organize content into main sections with subheadings (### for subsections)
+* **Important Points:** Use bullet points (*) for key concepts
+* **Detailed Content:** Provide comprehensive explanations with examples
+* **Timestamps:** Include clickable timestamp links at the end of each paragraph/point
+
+## Timestamp Link Format:
+* **CRITICAL:** Use this exact format for timestamp links: [SECONDS](?v=${videoId}&t=SECONDS)
+* Always use exact second values from the subtitle timestamps
+* Place ONE timestamp link at the end of each paragraph/point
+* Use format like: "This concept is explained in detail [245](?v=${videoId}&t=245)."
+
+## Content Guidelines:
+1. **Comprehensive:** Cover all major topics discussed in detail
+2. **Well-organized:** Use proper markdown hierarchy (# ## ### ####)
+3. **Educational:** Focus on learning objectives and key takeaways
+4. **Timestamp-rich:** Include relevant timestamps for easy navigation
+5. **Detailed:** Provide sufficient detail for study purposes
+6. **Structured:** Use bullet points, numbered lists, and subheadings effectively
+
+## Example Format:
+\`\`\`markdown
+# Video Title Here
+
+## Overview
+Brief overview of what the video covers and main learning objectives [15](?v=${videoId}&t=15).
+
+## Main Topic 1
+Detailed explanation of the first major topic discussed in the video [45](?v=${videoId}&t=45).
+
+### Subtopic 1.1
+* **Key Point 1:** Detailed explanation with context [120](?v=${videoId}&t=120).
+* **Key Point 2:** Another important concept covered [185](?v=${videoId}&t=185).
+
+### Subtopic 1.2
+Further details and examples provided in this section [245](?v=${videoId}&t=245).
+
+## Main Topic 2
+Discussion of the second major theme [320](?v=${videoId}&t=320).
+
+## Key Takeaways
+* Summary point 1 [450](?v=${videoId}&t=450)
+* Summary point 2 [480](?v=${videoId}&t=480)
+\`\`\`
+
+Generate a complete summary that students can use for studying and quick reference with rich timestamp navigation.`
+
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({ 
+          text: summaryPrompt,
+          videoId: videoId,
+          provider: provider,
+          transcript: transcript,
+          context: null
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to generate summary")
+      }
+
+      if (!response.body) {
+        throw new Error("No response received")
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let result = ""
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        result += decoder.decode(value)
+        setGeneratedSummary(result) // This will cause real-time streaming updates
+        
+        // Auto-scroll to bottom during summary generation
+        if (summaryContainerRef.current) {
+          summaryContainerRef.current.scrollTop = summaryContainerRef.current.scrollHeight
+        }
+      }
+
+      toast({
+        title: "Summary Generated",
+        description: "Video summary has been created successfully!",
+      })
+
+    } catch (error) {
+      console.error("Error generating summary:", error)
+      toast({
+        title: "Summary Error",
+        description: "Failed to generate summary. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
+
+  // Auto-generate summary when switching to summary mode and transcript is available
+  useEffect(() => {
+    if (mode === "summary" && transcript && transcript.length > 0 && !generatedSummary && !summaryLoading) {
+      generateSummary()
+    }
+  }, [mode, transcript])
+
+  // Reset summary when video changes
+  useEffect(() => {
+    setGeneratedSummary("")
+  }, [videoId])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -235,6 +353,26 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
       return
     }
 
+    // Check if transcript is available
+    if (transcript === null) {
+      toast({
+        title: "Transcript Loading",
+        description: "Please wait for the video transcript to load before asking questions.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Check if transcript failed to load
+    if (transcript.length === 0) {
+      toast({
+        title: "Transcript Unavailable",
+        description: "Video transcript could not be loaded. You can still ask general questions.",
+        variant: "destructive",
+      })
+      // Allow to continue even without transcript for general questions
+    }
+
     const { enhancedPrompt, referencedNotes } = parseNoteReferences(inputValue)
 
     // Get the user's API key from localStorage
@@ -281,8 +419,9 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
         },
         body: JSON.stringify({ 
           text: enhancedPrompt,
-          videoId:videoId,
+          videoId: videoId,
           provider: provider, // Tell the API which provider to use
+          transcript: transcript, // Send transcript data instead of fetching it
           context: referencedNotes.length > 0 ? {
             notes: referencedNotes.map(note => ({
               timestamp: note.timestamp,
@@ -460,7 +599,29 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
 
   // Enhanced markdown renderer with clickable timestamps
   const renderMessageContent = (content: string) => {
-    console.log('Rendering content:', content);
+    console.log('Rendering content length:', content.length);
+    console.log('Content preview:', content.substring(0, 200));
+    
+    if (!content || content.trim() === '') {
+      return <div>No content to display</div>;
+    }
+
+    // Clean up the content - remove markdown code block wrapper if present
+    let cleanContent = content.trim();
+    
+    // Remove ```markdown at the beginning and ``` at the end
+    if (cleanContent.startsWith('```markdown')) {
+      cleanContent = cleanContent.replace(/^```markdown\s*/, '');
+    } else if (cleanContent.startsWith('```')) {
+      cleanContent = cleanContent.replace(/^```\s*/, '');
+    }
+    
+    // Remove trailing ``` if present
+    if (cleanContent.endsWith('```')) {
+      cleanContent = cleanContent.replace(/\s*```$/, '');
+    }
+    
+    console.log('Cleaned content preview:', cleanContent.substring(0, 200));
     
     // Custom components for ReactMarkdown
     const components = {
@@ -508,32 +669,49 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
           </span>
         );
       },
-      // Ensure other markdown elements render properly
-      p: ({ children, ...props }: any) => <p className="mb-2 last:mb-0" {...props}>{children}</p>,
-      h1: ({ children, ...props }: any) => <h1 className="text-xl font-bold mb-3 mt-4 first:mt-0" {...props}>{children}</h1>,
-      h2: ({ children, ...props }: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props}>{children}</h2>,
-      h3: ({ children, ...props }: any) => <h3 className="text-base font-semibold mb-2 mt-2 first:mt-0" {...props}>{children}</h3>,
-      ul: ({ children, ...props }: any) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props}>{children}</ul>,
-      ol: ({ children, ...props }: any) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props}>{children}</ol>,
-      li: ({ children, ...props }: any) => <li className="text-sm" {...props}>{children}</li>,
+      // Ensure other markdown elements render properly with better styling
+      p: ({ children, ...props }: any) => <p className="mb-3 last:mb-0 text-gray-800 dark:text-gray-200 leading-relaxed" {...props}>{children}</p>,
+      h1: ({ children, ...props }: any) => <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2" {...props}>{children}</h1>,
+      h2: ({ children, ...props }: any) => <h2 className="text-xl font-semibold mb-3 mt-5 first:mt-0 text-gray-900 dark:text-gray-100" {...props}>{children}</h2>,
+      h3: ({ children, ...props }: any) => <h3 className="text-lg font-semibold mb-2 mt-4 first:mt-0 text-gray-900 dark:text-gray-100" {...props}>{children}</h3>,
+      h4: ({ children, ...props }: any) => <h4 className="text-base font-semibold mb-2 mt-3 first:mt-0 text-gray-900 dark:text-gray-100" {...props}>{children}</h4>,
+      ul: ({ children, ...props }: any) => <ul className="list-disc pl-6 mb-3 space-y-1" {...props}>{children}</ul>,
+      ol: ({ children, ...props }: any) => <ol className="list-decimal pl-6 mb-3 space-y-1" {...props}>{children}</ol>,
+      li: ({ children, ...props }: any) => <li className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed" {...props}>{children}</li>,
       code: ({ inline, children, ...props }: any) => 
         inline ? (
-          <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>
+          <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-pink-600 dark:text-pink-400" {...props}>{children}</code>
         ) : (
-          <code className="block bg-muted p-2 rounded text-sm font-mono overflow-x-auto" {...props}>{children}</code>
+          <pre className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-sm font-mono overflow-x-auto mb-3" {...props}>
+            <code>{children}</code>
+          </pre>
         ),
       blockquote: ({ children, ...props }: any) => (
-        <blockquote className="border-l-4 border-muted pl-4 italic my-2" {...props}>{children}</blockquote>
+        <blockquote className="border-l-4 border-blue-500 pl-4 italic my-3 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 py-2 rounded-r" {...props}>{children}</blockquote>
       ),
-      strong: ({ children, ...props }: any) => <strong className="font-semibold" {...props}>{children}</strong>,
-      em: ({ children, ...props }: any) => <em className="italic" {...props}>{children}</em>,
+      strong: ({ children, ...props }: any) => <strong className="font-semibold text-gray-900 dark:text-gray-100" {...props}>{children}</strong>,
+      em: ({ children, ...props }: any) => <em className="italic text-gray-700 dark:text-gray-300" {...props}>{children}</em>,
     };
     
-    return (
-      <div className="prose prose-sm dark:prose-invert max-w-none">
-        <ReactMarkdown components={components}>{content}</ReactMarkdown>
-      </div>
-    );
+    console.log('About to render ReactMarkdown with components:', Object.keys(components));
+    
+    try {
+      return (
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown components={components}>
+            {cleanContent}
+          </ReactMarkdown>
+        </div>
+      );
+    } catch (error) {
+      console.error('ReactMarkdown error:', error);
+      return (
+        <div className="text-red-500">
+          <p>Error rendering markdown content</p>
+          <pre className="text-xs mt-2 bg-gray-100 p-2 rounded">{cleanContent}</pre>
+        </div>
+      );
+    }
   }
 
   return (
@@ -564,8 +742,13 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
             size="sm"
             onClick={() => setMode("summary")}
             className="flex items-center space-x-1"
+            disabled={summaryLoading}
           >
-            <FileText className="w-4 h-4" />
+            {summaryLoading ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
             <span>Summary</span>
           </Button>
         </div>
@@ -582,9 +765,19 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
                   <MessageCircle className="w-12 h-12 mx-auto opacity-50" />
                   <div>
                     <h3 className="font-medium mb-2">AI Study Assistant</h3>
-                    <p className="text-sm mb-4">
-                      Ask questions about the video content or reference specific study notes using @note1, @note2, etc.
-                    </p>
+                    {transcript === null ? (
+                      <p className="text-sm mb-4 text-yellow-600 dark:text-yellow-400">
+                        Loading video transcript... Please wait before asking questions.
+                      </p>
+                    ) : transcript.length === 0 ? (
+                      <p className="text-sm mb-4 text-orange-600 dark:text-orange-400">
+                        Video transcript could not be loaded. You can still ask general questions.
+                      </p>
+                    ) : (
+                      <p className="text-sm mb-4">
+                        Ask questions about the video content or reference specific study notes using @note1, @note2, etc.
+                      </p>
+                    )}
                     {screenshots.length > 0 && (
                       <div className="space-y-2">
                         <p className="text-xs font-medium">Available Notes:</p>
@@ -704,20 +897,25 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
                 <div className="flex-1 relative">
                   <Textarea
                     ref={textareaRef}
-                    placeholder="Ask about the video or reference notes with @note1, @note2..."
+                    placeholder={
+                      transcript === null 
+                        ? "Loading transcript..." 
+                        : "Ask about the video or reference notes with @note1, @note2..."
+                    }
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
                     className="min-h-[40px] max-h-[96px] resize-none pr-12"
                     rows={1}
-                    disabled={isLoading}
+                    disabled={isLoading || transcript === null}
                   />
                 </div>
                 <Button 
                   onClick={handleSendMessage} 
-                  disabled={!inputValue.trim() || isLoading} 
+                  disabled={!inputValue.trim() || isLoading || transcript === null} 
                   size="icon" 
                   className="shrink-0"
+                  title={transcript === null ? "Waiting for transcript to load..." : "Send message"}
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -772,10 +970,98 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
         )}
 
         {mode === "summary" && (
-          <div className="h-full overflow-y-auto p-4">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{mockSummary}</ReactMarkdown>
-            </div>
+          <div ref={summaryContainerRef} className="h-full overflow-y-auto p-4">
+            {transcript === null ? (
+              <div className="h-full flex items-center justify-center text-center">
+                <div className="max-w-md">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Loading Transcript</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Please wait while we load the video transcript to generate a summary.
+                  </p>
+                </div>
+              </div>
+            ) : transcript.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center">
+                <div className="max-w-md">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Transcript Available</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Cannot generate summary because the video transcript could not be loaded.
+                  </p>
+                </div>
+              </div>
+            ) : summaryLoading ? (
+              <div>
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
+                  <h2 className="text-lg font-semibold">Video Summary</h2>
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-emerald-600"></div>
+                    <span className="text-sm text-muted-foreground">Generating...</span>
+                  </div>
+                </div>
+                {generatedSummary ? (
+                  <div className="animate-in fade-in duration-300">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      {renderMessageContent(generatedSummary)}
+                    </div>
+                    <div className="mt-4 flex items-center space-x-2 text-muted-foreground border-t border-border pt-2">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></div>
+                        <div className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse delay-100"></div>
+                        <div className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse delay-200"></div>
+                      </div>
+                      <span className="text-xs">AI is writing summary...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-center">
+                    <div className="max-w-md">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                      <h3 className="text-lg font-medium mb-2">Generating Summary</h3>
+                      <p className="text-sm text-muted-foreground">
+                        AI is analyzing the video transcript to create a comprehensive summary...
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : generatedSummary ? (
+              <div className="animate-in fade-in duration-500">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
+                  <h2 className="text-lg font-semibold">Video Summary</h2>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setGeneratedSummary("")
+                      generateSummary()
+                    }}
+                    disabled={summaryLoading}
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Regenerate
+                  </Button>
+                </div>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  {renderMessageContent(generatedSummary)}
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-center">
+                <div className="max-w-md">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Generate Summary</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Create an AI-powered summary of this video with clickable timestamps.
+                  </p>
+                  <Button onClick={generateSummary} disabled={!transcript || transcript.length === 0}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Generate Summary
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

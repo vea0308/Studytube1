@@ -17,8 +17,38 @@ export default function LearnPage() {
   const [notesLoading, setNotesLoading] = useState(false)
   const [playerInstance, setPlayerInstance] = useState<any>(null)
   const [currentSeekTime, setCurrentSeekTime] = useState<number>(0)
+  const [transcript, setTranscript] = useState<any[] | null>(null)
+  const [transcriptFetched, setTranscriptFetched] = useState(false)
   const searchParams = useSearchParams()
   const user = useUser()
+
+  async function fetchTranscript(videoId: string) {
+    // Prevent multiple fetches for the same video
+    if (transcriptFetched) return
+    
+    try {
+      const response = await fetch('/api/transcript', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ videoId }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTranscript(data.transcript)
+      } else {
+        console.error('Failed to fetch transcript')
+        setTranscript([]) // Set empty array as fallback
+      }
+    } catch (error) {
+      console.error('Error fetching transcript:', error)
+      setTranscript([]) // Set empty array as fallback
+    } finally {
+      setTranscriptFetched(true)
+    }
+  }
 
   async function getAllScreenshots(user: any, videoId: string) {
     try {
@@ -46,14 +76,26 @@ export default function LearnPage() {
   useEffect(() => {
     // Get video ID from URL
     const videoParam = searchParams.get("v")
-    if (videoParam) {
-      setVideoId(videoParam)
-      getAllScreenshots(user, videoParam);
-    } else {
-      setVideoId("dpw9EHDh2bM")
+    const newVideoId = videoParam || "dpw9EHDh2bM"
+    
+    // Only fetch if video changed or transcript not fetched yet
+    if (newVideoId !== videoId || !transcriptFetched) {
+      setVideoId(newVideoId)
+      
+      if (videoParam) {
+        getAllScreenshots(user, videoParam)
+      }
+      
+      // Reset transcript state for new video
+      if (newVideoId !== videoId) {
+        setTranscript(null)
+        setTranscriptFetched(false)
+      }
+      
+      fetchTranscript(newVideoId)
     }
     setIsLoading(false)
-  }, [searchParams,user])
+  }, [searchParams, user, videoId])
 
   // Handle timestamp clicks from AI assistant
   const handleTimestampClick = (timeInSeconds: number) => {
@@ -68,7 +110,7 @@ export default function LearnPage() {
     window.history.replaceState({}, '', currentUrl.toString()) // Use replaceState instead of pushState
   }
 
-  if (isLoading) {
+  if (isLoading || !transcriptFetched) {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div>
@@ -102,6 +144,7 @@ export default function LearnPage() {
             screenshots={screenshots} 
             videoId={videoId || "dpw9EHDh2bM"}
             onTimestampClick={handleTimestampClick}
+            transcript={transcript}
           />
         </div>
       </div>
