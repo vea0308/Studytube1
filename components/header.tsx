@@ -17,7 +17,6 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-950/60">
@@ -39,6 +38,29 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
 
             {/* Right side actions */}
             <div className="flex items-center space-x-4">
+              {/* Bolt.new Badge */}
+              <a
+                href="https://bolt.new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-medium rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="flex-shrink-0"
+                >
+                  <path
+                    d="M13 3L4 14h7l-1 8 9-11h-7l1-8z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span>Built with Bolt</span>
+              </a>
+
               {/* Theme toggle */}
               <Button
                 variant="ghost"
@@ -85,8 +107,32 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
               </Button>
             </div>
           </div>
-        </div>
 
+          {/* Mobile Bolt Badge */}
+          <div className="sm:hidden pb-3">
+            <a
+              href="https://bolt.new"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-medium rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="flex-shrink-0"
+              >
+                <path
+                  d="M13 3L4 14h7l-1 8 9-11h-7l1-8z"
+                  fill="currentColor"
+                />
+              </svg>
+              <span>Built with Bolt</span>
+            </a>
+          </div>
+        </div>
       </header>
 
       <SettingsModal open={showSettings} onOpenChange={setShowSettings} />

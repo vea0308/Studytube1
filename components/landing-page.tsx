@@ -180,15 +180,31 @@ export function LandingPage() {
 
             {/* Right side actions */}
             <div className="flex items-center space-x-4">
+              {/* Bolt.new Badge */}
+              <a
+                href="https://bolt.new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-medium rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="flex-shrink-0"
+                >
+                  <path
+                    d="M13 3L4 14h7l-1 8 9-11h-7l1-8z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span>Built with Bolt</span>
+              </a>
+
               {/* Sign In / Start Project buttons */}
               <div className="hidden md:flex items-center space-x-2">
-                {/* <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  Sign in
-                </Button> */}
                 <UserButton
                   style={{
                     height: "38px",
@@ -231,6 +247,31 @@ export function LandingPage() {
               className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
             >
               <div className="container mx-auto px-4 py-4">
+                {/* Mobile Bolt Badge */}
+                <div className="mb-4">
+                  <a
+                    href="https://bolt.new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-medium rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="flex-shrink-0"
+                    >
+                      <path
+                        d="M13 3L4 14h7l-1 8 9-11h-7l1-8z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>Built with Bolt</span>
+                  </a>
+                </div>
+
                 <nav className="flex flex-col space-y-4">
                   {["Features", "How It Works", "Testimonials", "Pricing"].map((item) => (
                     <a
