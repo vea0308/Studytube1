@@ -24,9 +24,9 @@ ${JSON.stringify(subtitles)}
 * **Every paragraph must include relevant video timestamp links**
 
 ## Timestamp Link Format:
-* **CRITICAL:** Use this exact format for timestamp links: [MM:SS](?v=${videoId}&t=SECONDS)
-* Example: [3:21](?v=${videoId}&t=201) for 3 minutes 21 seconds
-* Convert MM:SS to total seconds for the t parameter
+* **CRITICAL:** Use this exact format for timestamp links: [SECONDS](?v=${videoId}&t=SECONDS)
+* Example: [201](?v=${videoId}&t=201) for 201 seconds (3 minutes 21 seconds)
+* Always use the exact second values from the subtitle timestamps
 * Include multiple timestamp references when topics span different parts of the video
 
 ## Response Guidelines:
@@ -42,23 +42,23 @@ ${JSON.stringify(subtitles)}
 ## Answer
 
 ### Introduction
-The video discusses [topic] starting at [0:35](?v=${videoId}&t=35) where the speaker mentions...
+The video discusses [topic] starting at [35](?v=${videoId}&t=35) where the speaker mentions...
 
 ### Main Points
-* **Point 1:** Explained at [2:15](?v=${videoId}&t=135) - [quote from subtitles]
-* **Point 2:** Covered at [5:30](?v=${videoId}&t=330) - [additional details]
-* **Point 3:** Demonstrated at [8:45](?v=${videoId}&t=525) - [practical examples]
+* **Point 1:** Explained at [135](?v=${videoId}&t=135) - [quote from subtitles]
+* **Point 2:** Covered at [330](?v=${videoId}&t=330) - [additional details]
+* **Point 3:** Demonstrated at [525](?v=${videoId}&t=525) - [practical examples]
 
 ### Key Timestamps
-- Introduction: [0:35](?v=${videoId}&t=35)
-- Main concept: [2:15](?v=${videoId}&t=135)
-- Examples: [5:30](?v=${videoId}&t=330)
-- Summary: [8:45](?v=${videoId}&t=525)
+- Introduction: [35](?v=${videoId}&t=35)
+- Main concept: [135](?v=${videoId}&t=135)
+- Examples: [330](?v=${videoId}&t=330)
+- Summary: [525](?v=${videoId}&t=525)
 \`\`\`
 
 **IMPORTANT:**
 - Use exact timestamps from the subtitles provided
-- Convert timestamps to seconds for the t parameter in links
+- Always use seconds format for timestamp links (not MM:SS)
 - Make responses educational and well-structured
 - Include direct quotes when relevant
 - If information isn't in the subtitles, clearly state this

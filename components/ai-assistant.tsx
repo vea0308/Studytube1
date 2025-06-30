@@ -314,6 +314,19 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
     }
   }
 
+  // Convert seconds to MM:SS or HH:MM:SS format
+  const formatTimestamp = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+  }
+
   // Enhanced markdown renderer with clickable timestamps
   const renderMessageContent = (content: string) => {
     console.log('Rendering content:', content);
@@ -322,32 +335,37 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
     const components = {
       // Custom link renderer for timestamp links
       a: ({ href, children, ...props }: any) => {
-        // Check if this is a timestamp link
-        const timestampMatch = href?.match(/^\?v=([^&]+)&t=(\d+)$/);
+        console.log('Link detected:', { href, children });
+        
+        // Check if this is a timestamp link - expects: [SECONDS](?v=videoId&t=SECONDS)
+        // Now also handles decimal seconds like 569.16
+        const timestampMatch = href?.match(/^\?v=([^&]+)&t=(\d+(\.\d+)?)$/);
         
         if (timestampMatch) {
           const videoId = timestampMatch[1];
-          const seconds = parseInt(timestampMatch[2]);
-          const displayTime = children?.toString() || 'Unknown';
+          const seconds = Math.floor(parseFloat(timestampMatch[2])); // Convert to integer seconds
+          const displayTime = formatTimestamp(seconds); 
           
-          console.log('Found timestamp link:', { displayTime, videoId, seconds });
+          console.log('Timestamp link found:', { href, children, videoId, seconds, displayTime });
           
           return (
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log(`Timestamp clicked: ${seconds}s`);
+                console.log(`Timestamp button clicked: ${seconds}s (${displayTime})`);
                 onTimestampClick?.(seconds);
               }}
-              className="inline-flex items-center px-2 py-1 mx-1 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer border border-blue-200 dark:border-blue-800 hover:scale-105 transform"
+              className="inline-flex items-center px-1.5 py-0.5 mx-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-105 transform transition-all duration-150 cursor-pointer underline decoration-blue-400 hover:decoration-blue-600"
               title={`Jump to ${displayTime}`}
               type="button"
             >
-              🕐 {displayTime}
+              {displayTime}
             </button>
           );
         }
+        
+        console.log('Regular link detected:', { href, children });
         
         // Regular link - render as span to prevent navigation
         return (
