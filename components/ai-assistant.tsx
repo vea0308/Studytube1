@@ -42,7 +42,8 @@ interface Flashcard {
 interface AIAssistantProps {
   setShowSettings: (show: boolean) => void
   screenshots: Screenshot[]
-  videoId:string
+  videoId: string
+  onTimestampClick?: (timeInSeconds: number) => void
 }
 
 const mockFlashcards: Flashcard[] = [
@@ -108,12 +109,12 @@ useEffect(() => {
 
 > **Note**: Remember to always include dependencies in the useEffect dependency array to avoid bugs.`
 
-export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssistantProps) {
+export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestampClick }: AIAssistantProps) {
   const [mode, setMode] = useState<AssistantMode>("chat")
   const [provider, setProvider] = useState<AIProvider>("openai")
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
-  const [currentFlashcard, setCurrentFlashcard] = useState(0)
+  const [currentFlashcard, setCurrentFlashcard] = useState(0) 
   const [showAnswer, setShowAnswer] = useState(false)
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false)
   const [missingProvider, setMissingProvider] = useState<AIProvider | null>(null)
@@ -307,6 +308,85 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
     textareaRef.current?.focus()
   }
 
+  const handleTimestampClick = (timestamp: number) => {
+    if (onTimestampClick) {
+      onTimestampClick(timestamp)
+    }
+  }
+
+  // Enhanced markdown renderer with clickable timestamps
+  const renderMessageContent = (content: string) => {
+    console.log('Rendering content:', content);
+    
+    // Custom components for ReactMarkdown
+    const components = {
+      // Custom link renderer for timestamp links
+      a: ({ href, children, ...props }: any) => {
+        // Check if this is a timestamp link
+        const timestampMatch = href?.match(/^\?v=([^&]+)&t=(\d+)$/);
+        
+        if (timestampMatch) {
+          const videoId = timestampMatch[1];
+          const seconds = parseInt(timestampMatch[2]);
+          const displayTime = children?.toString() || 'Unknown';
+          
+          console.log('Found timestamp link:', { displayTime, videoId, seconds });
+          
+          return (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`Timestamp clicked: ${seconds}s`);
+                onTimestampClick?.(seconds);
+              }}
+              className="inline-flex items-center px-2 py-1 mx-1 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer border border-blue-200 dark:border-blue-800 hover:scale-105 transform"
+              title={`Jump to ${displayTime}`}
+              type="button"
+            >
+              🕐 {displayTime}
+            </button>
+          );
+        }
+        
+        // Regular link - render as span to prevent navigation
+        return (
+          <span
+            className="text-blue-600 dark:text-blue-400 cursor-default"
+            {...props}
+          >
+            {children}
+          </span>
+        );
+      },
+      // Ensure other markdown elements render properly
+      p: ({ children, ...props }: any) => <p className="mb-2 last:mb-0" {...props}>{children}</p>,
+      h1: ({ children, ...props }: any) => <h1 className="text-xl font-bold mb-3 mt-4 first:mt-0" {...props}>{children}</h1>,
+      h2: ({ children, ...props }: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props}>{children}</h2>,
+      h3: ({ children, ...props }: any) => <h3 className="text-base font-semibold mb-2 mt-2 first:mt-0" {...props}>{children}</h3>,
+      ul: ({ children, ...props }: any) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props}>{children}</ul>,
+      ol: ({ children, ...props }: any) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props}>{children}</ol>,
+      li: ({ children, ...props }: any) => <li className="text-sm" {...props}>{children}</li>,
+      code: ({ inline, children, ...props }: any) => 
+        inline ? (
+          <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>
+        ) : (
+          <code className="block bg-muted p-2 rounded text-sm font-mono overflow-x-auto" {...props}>{children}</code>
+        ),
+      blockquote: ({ children, ...props }: any) => (
+        <blockquote className="border-l-4 border-muted pl-4 italic my-2" {...props}>{children}</blockquote>
+      ),
+      strong: ({ children, ...props }: any) => <strong className="font-semibold" {...props}>{children}</strong>,
+      em: ({ children, ...props }: any) => <em className="italic" {...props}>{children}</em>,
+    };
+    
+    return (
+      <div className="prose prose-sm dark:prose-invert max-w-none">
+        <ReactMarkdown components={components}>{content}</ReactMarkdown>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Mode Selector */}
@@ -397,7 +477,7 @@ export function AIAssistant({ setShowSettings, screenshots, videoId }: AIAssista
                           <span className="text-xs text-muted-foreground">Thinking...</span>
                         </div>
                       ) : message.content ? (
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                        renderMessageContent(message.content)
                       ) : null}
                     </div>
                     {message.referencedNotes && message.referencedNotes.length > 0 && (

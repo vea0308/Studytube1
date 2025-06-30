@@ -1,12 +1,13 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Settings, Moon, Sun, Menu, X, FileText } from "lucide-react"
+import { Settings, Moon, Sun, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { SettingsModal } from "@/components/settings-modal"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { UserButton } from "@civic/auth-web3/react"
+import Image from "next/image"
 
 interface HeaderProps {
   showSettings: boolean
@@ -27,8 +28,14 @@ export function Header({ showSettings, setShowSettings }: HeaderProps) {
             <a href="/" className="flex items-center space-x-4">
               <motion.div whileHover={{ scale: 1.02 }} className="flex items-center space-x-3">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-white" />
+                  <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0">
+                    <Image
+                      src="/logo.png"
+                      alt="StudyTube Logo"
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 object-contain"
+                    />
                   </div>
                   <span className="text-xl font-semibold text-foreground whitespace-nowrap">StudyTube</span>
                 </div>

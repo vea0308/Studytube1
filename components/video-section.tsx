@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
@@ -23,15 +23,16 @@ export interface Screenshot {
   imageUrl?: string
 }
 
-
 interface VideoSectionProps {
   screenshots: Screenshot[]
   setScreenshots: (screenshots: Screenshot[]) => void
   videoId?: string
   notesLoading: boolean
+  onPlayerReady?: (player: any) => void
+  seekToTime?: number // New prop for seeking to specific time
 }
 
-export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2bM", notesLoading }: VideoSectionProps) {
+export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2bM", notesLoading, onPlayerReady, seekToTime }: VideoSectionProps) {
   const [mode, setMode] = useState<Mode>("video")
   const [notesView, setNotesView] = useState<NotesView>("grid")
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0)
@@ -45,6 +46,56 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
     currentTime: 0,
     isPlaying: false,
   })
+
+  // Parse timestamp from URL
+  const [urlTimestamp, setUrlTimestamp] = useState<number>(0)
+
+  useEffect(() => {
+    // Extract timestamp from URL parameter on initial load
+    const urlParams = new URLSearchParams(window.location.search)
+    const timestampParam = urlParams.get('t')
+
+    if (timestampParam) {
+      // Parse timestamp (supports formats like "123s", "2m3s", "1h2m3s")
+      const timeInSeconds = parseYouTubeTimestamp(timestampParam)
+      setUrlTimestamp(timeInSeconds)
+    } else {
+      setUrlTimestamp(0)
+    }
+  }, []) // Only run on mount
+
+  const parseYouTubeTimestamp = (timestamp: string): number => {
+    // Remove 's' at the end if present
+    const cleanTimestamp = timestamp.replace(/s$/, '')
+
+    // Handle different formats
+    if (cleanTimestamp.includes('h') || cleanTimestamp.includes('m')) {
+      let totalSeconds = 0
+
+      // Extract hours
+      const hoursMatch = cleanTimestamp.match(/(\d+)h/)
+      if (hoursMatch) {
+        totalSeconds += parseInt(hoursMatch[1]) * 3600
+      }
+
+      // Extract minutes
+      const minutesMatch = cleanTimestamp.match(/(\d+)m/)
+      if (minutesMatch) {
+        totalSeconds += parseInt(minutesMatch[1]) * 60
+      }
+
+      // Extract seconds
+      const secondsMatch = cleanTimestamp.match(/(\d+)s?$/)
+      if (secondsMatch) {
+        totalSeconds += parseInt(secondsMatch[1])
+      }
+
+      return totalSeconds
+    } else {
+      // Simple seconds format
+      return parseInt(cleanTimestamp) || 0
+    }
+  }
 
   // Initialize with mock data if no screenshots provided
   const currentScreenshots = screenshots
@@ -245,9 +296,15 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
             <YouTubePlayer
               videoId={videoId}
               isVisible={mode === "video"}
-              onPlayerReady={setPlayerInstance}
-              initialTime={playerState.currentTime}
+              onPlayerReady={(player) => {
+                setPlayerInstance(player)
+                if (onPlayerReady) {
+                  onPlayerReady(player)
+                }
+              }}
+              initialTime={urlTimestamp > 0 ? urlTimestamp : playerState.currentTime}
               initialPlaying={playerState.isPlaying}
+              seekToTime={seekToTime}
             />
           </div>
         ) : (

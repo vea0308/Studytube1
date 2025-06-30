@@ -9,9 +9,14 @@ import { CivicAuthProvider } from "@civic/auth-web3/nextjs"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "YouTube Study Tool",
-  description: "AI-powered study companion for YouTube videos",
-  generator: 'v0.dev'
+  title: "StudyTube - AI-Powered YouTube Learning Platform",
+  description: "Transform how you learn from YouTube videos with AI-powered notes, chat, and study tools. Take timestamped notes, get AI assistance, and create flashcards.",
+  generator: 'v0.dev',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({
@@ -21,6 +26,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#10b981" />
+      </head>
       <body className={inter.className}>
         <CivicAuthProvider>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>

@@ -14,9 +14,11 @@ export default function LearnPage() {
   const [screenshots, setScreenshots] = useState<Screenshot[]>([])
   const [videoId, setVideoId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [notesLoading,setNotesLoading]=useState(false);
+  const [notesLoading, setNotesLoading] = useState(false)
+  const [playerInstance, setPlayerInstance] = useState<any>(null)
+  const [currentSeekTime, setCurrentSeekTime] = useState<number>(0)
   const searchParams = useSearchParams()
-  const user = useUser();
+  const user = useUser()
 
   async function getAllScreenshots(user: any, videoId: string) {
     try {
@@ -53,6 +55,19 @@ export default function LearnPage() {
     setIsLoading(false)
   }, [searchParams,user])
 
+  // Handle timestamp clicks from AI assistant
+  const handleTimestampClick = (timeInSeconds: number) => {
+    console.log(`Jumping to timestamp: ${timeInSeconds}s`)
+    
+    // Update the seekTime prop to trigger video seeking
+    setCurrentSeekTime(timeInSeconds)
+    
+    // Optional: Update URL for better UX (without redirecting)
+    const currentUrl = new URL(window.location.href)
+    currentUrl.searchParams.set('t', `${timeInSeconds}s`)
+    window.history.replaceState({}, '', currentUrl.toString()) // Use replaceState instead of pushState
+  }
+
   if (isLoading) {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-background">
@@ -70,12 +85,24 @@ export default function LearnPage() {
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
         {/* Left Half - Video/Notes */}
         <div className="flex-1 lg:w-1/2 overflow-hidden">
-          <VideoSection screenshots={screenshots} setScreenshots={setScreenshots} videoId={videoId || "dpw9EHDh2bM"} notesLoading={notesLoading} />
+          <VideoSection 
+            screenshots={screenshots} 
+            setScreenshots={setScreenshots} 
+            videoId={videoId || "dpw9EHDh2bM"} 
+            notesLoading={notesLoading}
+            onPlayerReady={setPlayerInstance}
+            seekToTime={currentSeekTime}
+          />
         </div>
 
         {/* Right Half - AI Assistant */}
         <div className="flex-1 lg:w-1/2 border-l border-border overflow-hidden">
-          <AIAssistant setShowSettings={setShowSettings} screenshots={screenshots} videoId={videoId || "dpw9EHDh2bM"} />
+          <AIAssistant 
+            setShowSettings={setShowSettings} 
+            screenshots={screenshots} 
+            videoId={videoId || "dpw9EHDh2bM"}
+            onTimestampClick={handleTimestampClick}
+          />
         </div>
       </div>
     </div>
