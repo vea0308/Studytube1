@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Play, FileText, Save, Plus, Clock, Grid, Maximize, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { YouTubePlayer } from "./youtube-player"
 import { useToast } from "@/components/ui/use-toast"
@@ -219,6 +220,76 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
     return date.toLocaleString()
   }
 
+  // Loading skeleton for notes grid
+  const NotesGridSkeleton = () => (
+    <div className="h-full p-4 overflow-y-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Card key={index} className="border border-border">
+            <div className="p-3">
+              <div className="relative aspect-video w-full mb-3">
+                <Skeleton className="w-full h-full rounded-md" />
+                <div className="absolute top-2 left-2">
+                  <Skeleton className="h-5 w-12 rounded" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton className="h-5 w-12 rounded" />
+              </div>
+              <Skeleton className="h-8 w-full mb-2" />
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-6 w-6 rounded" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+
+  // Loading skeleton for full view
+  const NotesFullSkeleton = () => (
+    <div className="h-full flex flex-col">
+      <div className="flex-1 p-4 flex flex-col">
+        <div className="flex-1 flex flex-col">
+          {/* Note Header Skeleton */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Skeleton className="h-6 w-12 rounded" />
+              <Skeleton className="h-6 w-16 rounded" />
+            </div>
+            <Skeleton className="h-4 w-24" />
+          </div>
+
+          {/* Note Image Skeleton */}
+          <div className="relative mb-4 flex-shrink-0">
+            <div className="aspect-video max-h-[50vh] w-full relative overflow-hidden rounded-lg border border-border">
+              <Skeleton className="w-full h-full" />
+            </div>
+          </div>
+
+          {/* Note Description Skeleton */}
+          <div className="flex-1 mb-4">
+            <Skeleton className="w-full h-32 rounded" />
+          </div>
+
+          {/* Note Actions Skeleton */}
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-9 w-28 rounded" />
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Controls Skeleton */}
+      <div className="p-4 border-t border-border flex items-center justify-between">
+        <Skeleton className="h-9 w-32 rounded" />
+        <Skeleton className="h-9 w-24 rounded" />
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Mode Toggle */}
@@ -239,9 +310,13 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
               className="flex items-center space-x-2"
             >
               <FileText className="w-4 h-4" />
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <span>Study Notes</span>
-                <span>{notesLoading ? <Loader2 className="animate-spin rotate-45" /> : `(${currentScreenshots.length})`}</span>
+                {notesLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <span className="text-xs">({currentScreenshots.length})</span>
+                )}
               </div>
             </Button>
           </div>
@@ -327,37 +402,23 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
           </div>
         ) : (
           <div className="h-full">
-            {
-              notesLoading ?
-                  <div className="h-full flex items-center justify-center text-center p-4">
-                    <div className="max-w-md">
-                      <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">Hang on</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        We are preparing your notes 
-                      </p>
-                      <Button onClick={() => setIsAddingNote(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Your First Note
-                      </Button>
-                    </div>
-                  </div>
-                :
-                currentScreenshots.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-center p-4">
-                    <div className="max-w-md">
-                      <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">No study notes yet</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Add your first note to get started with AI-powered learning.
-                      </p>
-                      <Button onClick={() => setIsAddingNote(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Your First Note
-                      </Button>
-                    </div>
-                  </div>
-                ) : notesView === "full" ? (
+            {notesLoading ? (
+              notesView === "full" ? <NotesFullSkeleton /> : <NotesGridSkeleton />
+            ) : currentScreenshots.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center p-4">
+                <div className="max-w-md">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No study notes yet</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Add your first note to get started with AI-powered learning.
+                  </p>
+                  <Button onClick={() => setIsAddingNote(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Your First Note
+                  </Button>
+                </div>
+              </div>
+            ) : notesView === "full" ? (
                   <div className="h-full flex flex-col">
                     <AnimatePresence mode="wait">
                       <motion.div

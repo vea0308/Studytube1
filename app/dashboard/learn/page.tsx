@@ -51,26 +51,37 @@ export default function LearnPage() {
   }
 
   async function getAllScreenshots(user: any, videoId: string) {
+    if (!user?.user?.email || !videoId) {
+      console.log('Missing user email or videoId for notes fetch')
+      setNotesLoading(false)
+      return
+    }
+
     try {
       setNotesLoading(true);
-      const data = await getNotesByUserAndVideo(user.user?.email, videoId)
-      if (data) {
+      console.log(`Fetching notes for user: ${user.user.email}, video: ${videoId}`)
+      const data = await getNotesByUserAndVideo(user.user.email, videoId)
+      if (data && Array.isArray(data)) {
         const screenshots = data.map((item: any) => ({
           id: item.id,
           timestamp: item.timestamp,
           description: item.description,
-          timeInSeconds: parseFloat(item.timestampSeconds),
+          timeInSeconds: parseFloat(item.timestampSeconds) || 0,
           capturedAt: new Date(item.createdAt),
-          imageUrl: item.image, 
+          imageUrl: item.image || `/placeholder.svg?height=120&width=200&text=Note`, 
         }));
+        console.log(`Loaded ${screenshots.length} notes`)
         setScreenshots(screenshots);
+      } else {
+        console.log('No notes found, setting empty array')
+        setScreenshots([])
       }
     } catch (error) {
-      console.log("error ",error);
-    }finally{
+      console.error("Error fetching notes:", error);
+      setScreenshots([]) // Reset to empty array on error
+    } finally {
       setNotesLoading(false);
     }
-
   }
 
   useEffect(() => {
@@ -78,24 +89,37 @@ export default function LearnPage() {
     const videoParam = searchParams.get("v")
     const newVideoId = videoParam || "dpw9EHDh2bM"
     
-    // Only fetch if video changed or transcript not fetched yet
-    if (newVideoId !== videoId || !transcriptFetched) {
+    // Check if video changed
+    const videoChanged = newVideoId !== videoId
+    
+    if (videoChanged) {
+      console.log(`Video changed from ${videoId} to ${newVideoId}`)
       setVideoId(newVideoId)
       
-      if (videoParam) {
-        getAllScreenshots(user, videoParam)
-      }
-      
       // Reset transcript state for new video
-      if (newVideoId !== videoId) {
-        setTranscript(null)
-        setTranscriptFetched(false)
-      }
+      setTranscript(null)
+      setTranscriptFetched(false)
       
+      // Reset notes for new video
+      setScreenshots([])
+    }
+    
+    // Fetch transcript if not fetched yet or video changed
+    if (!transcriptFetched || videoChanged) {
       fetchTranscript(newVideoId)
     }
+    
+    // Fetch notes if user is available and video is available
+    if (user?.user?.email && newVideoId && (videoChanged || screenshots.length === 0)) {
+      console.log('Fetching notes for user and video')
+      getAllScreenshots(user, newVideoId)
+    } else if (!user?.user?.email) {
+      console.log('No user email available, skipping notes fetch')
+      setNotesLoading(false)
+    }
+    
     setIsLoading(false)
-  }, [searchParams, user, videoId])
+  }, [searchParams, user?.user?.email, videoId]) // Include user.user.email as dependency
 
   // Handle timestamp clicks from AI assistant
   const handleTimestampClick = (timeInSeconds: number) => {
