@@ -187,7 +187,7 @@ export function YouTubePlayer({
     <div className="flex flex-col h-full space-y-4">
       {/* Video Container */}
       <div className="flex-1 relative">
-        <div className="relative w-full h-full">
+        <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
           {embedUrl && (
             <iframe
               ref={iframeRef}
@@ -199,16 +199,6 @@ export function YouTubePlayer({
               title={`YouTube video ${videoId}`}
             />
           )}
-        </div>
-      </div>
-
-      {/* Simple Controls */}
-      <div className="flex-shrink-0 flex items-center justify-center p-2">
-        <div className="text-sm text-muted-foreground">
-          <span className="hidden sm:inline">
-            Current: {currentTime}
-          </span>
-          <span className="sm:hidden">{currentTime}</span>
         </div>
       </div>
     </div>
