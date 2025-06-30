@@ -80,12 +80,170 @@ export function AIAssistant({ setShowSettings, screenshots, videoId, onTimestamp
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false)
   const [generatedSummary, setGeneratedSummary] = useState<string>("")
   const [summaryLoading, setSummaryLoading] = useState(false)
+  const [generatedFlashcards, setGeneratedFlashcards] = useState<Flashcard[]>([])
+  const [flashcardsLoading, setFlashcardsLoading] = useState(false)
   const summaryContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
-  // Generate summary from transcript
+  // Generate flashcards from transcript
+  const generateFlashcards = async () => {
+    if (!transcript || transcript.length === 0) {
+      toast({
+        title: "No Transcript Available",
+        description: "Cannot generate flashcards without video transcript.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!checkApiKey(provider)) {
+      toast({
+        title: "API Key Required",
+        description: `Please set up your ${provider.toUpperCase()} API key in settings to generate flashcards.`,
+        variant: "destructive",
+      })
+      setMissingProvider(provider)
+      setShowApiKeyDialog(true)
+      return
+    }
+
+    setFlashcardsLoading(true)
+    
+    try {
+      const savedKeys = localStorage.getItem("youtube-study-api-keys")
+      const apiKey = savedKeys ? JSON.parse(savedKeys)[provider] : null
+
+      const flashcardsPrompt = `You are StudyTube AI, a helpful learning assistant. Generate comprehensive study flashcards from this YouTube video based on the transcript.
+
+**Subtitles (with timestamps):**
+\`\`\`json
+${JSON.stringify(transcript)}
+\`\`\`
+
+**Video ID:** ${videoId}
+
+**INSTRUCTIONS:**
+
+Generate a well-structured JSON array of flashcards with the following requirements:
+
+## Flashcard Structure:
+Each flashcard should have:
+* **id:** Unique identifier (string)
+* **question:** Clear, focused study question
+* **answer:** Detailed answer with markdown formatting and timestamp references
+
+## Content Guidelines:
+1. **Comprehensive Coverage:** Create 8-12 flashcards covering all major concepts
+2. **Question Types:** Include definition, explanation, example, and application questions
+3. **Progressive Difficulty:** Start with basic concepts, progress to advanced
+4. **Clear Questions:** Each question should test one specific concept
+5. **Detailed Answers:** Provide thorough explanations with context
+6. **Timestamp References:** Include clickable timestamp links in answers
+
+## Answer Format Requirements:
+* Use markdown formatting for emphasis (**bold**, *italic*)
+* Include timestamp links using format: [SECONDS](?v=${videoId}&t=SECONDS)
+* Add "Reference: [timestamp](?v=${videoId}&t=SECONDS)" at the end of each answer
+* Use bullet points for multi-part answers
+* Include examples when relevant
+
+## Example Output Format:
+\`\`\`json
+[
+  {
+    "id": "1",
+    "question": "What is React Hooks and why were they introduced?",
+    "answer": "**React Hooks** are functions that let you use state and other React features in functional components. They were introduced to solve several problems:\\n\\n* **Code Reuse:** Allow sharing stateful logic between components\\n* **Component Simplification:** Eliminate the need for class components in many cases\\n* **Better Testing:** Make components easier to test and reason about\\n\\nHooks provide a more direct API to React concepts like state, lifecycle, and context.\\n\\nReference: [120](?v=${videoId}&t=120)"
+  },
+  {
+    "id": "2", 
+    "question": "How do you use the useState Hook?",
+    "answer": "The **useState Hook** allows you to add state to functional components:\\n\\n\`\`\`javascript\\nconst [state, setState] = useState(initialValue);\\n\`\`\`\\n\\n* **state** - current state value\\n* **setState** - function to update the state\\n* **initialValue** - the initial state value\\n\\nExample: \`const [count, setCount] = useState(0);\`\\n\\nReference: [245](?v=${videoId}&t=245)"
+  }
+]
+\`\`\`
+
+Generate comprehensive flashcards that students can use for effective studying and review. Focus on the most important concepts and include practical examples with timestamp references.`
+
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({ 
+          text: flashcardsPrompt,
+          videoId: videoId,
+          provider: provider,
+          transcript: transcript,
+          context: null
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to generate flashcards")
+      }
+
+      if (!response.body) {
+        throw new Error("No response received")
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let result = ""
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        result += decoder.decode(value)
+      }
+
+      // Parse the JSON response to extract flashcards
+      try {
+        // Clean up the response - remove any markdown code block wrapper
+        let cleanResult = result.trim()
+        if (cleanResult.startsWith('```json')) {
+          cleanResult = cleanResult.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+        } else if (cleanResult.startsWith('```')) {
+          cleanResult = cleanResult.replace(/^```\s*/, '').replace(/\s*```$/, '')
+        }
+
+        const flashcardsData = JSON.parse(cleanResult)
+        
+        if (Array.isArray(flashcardsData) && flashcardsData.length > 0) {
+          setGeneratedFlashcards(flashcardsData)
+          setCurrentFlashcard(0) // Reset to first card
+          toast({
+            title: "Flashcards Generated",
+            description: `${flashcardsData.length} study flashcards have been created successfully!`,
+          })
+        } else {
+          throw new Error("Invalid flashcards format received")
+        }
+      } catch (parseError) {
+        console.error("Error parsing flashcards JSON:", parseError)
+        console.log("Raw response:", result)
+        toast({
+          title: "Parsing Error",
+          description: "Failed to parse flashcards. Please try again.",
+          variant: "destructive",
+        })
+      }
+
+    } catch (error) {
+      console.error("Error generating flashcards:", error)
+      toast({
+        title: "Flashcards Error",
+        description: "Failed to generate flashcards. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setFlashcardsLoading(false)
+    }
+  }
   const generateSummary = async () => {
     if (!transcript || transcript.length === 0) {
       toast({
@@ -239,9 +397,18 @@ Generate a complete summary that students can use for studying and quick referen
     }
   }, [mode, transcript])
 
-  // Reset summary when video changes
+  // Auto-generate flashcards when switching to flashcards mode and transcript is available
+  useEffect(() => {
+    if (mode === "flashcards" && transcript && transcript.length > 0 && generatedFlashcards.length === 0 && !flashcardsLoading) {
+      generateFlashcards()
+    }
+  }, [mode, transcript])
+
+  // Reset summary and flashcards when video changes
   useEffect(() => {
     setGeneratedSummary("")
+    setGeneratedFlashcards([])
+    setCurrentFlashcard(0)
   }, [videoId])
 
   const scrollToBottom = () => {
@@ -553,12 +720,14 @@ Generate a complete summary that students can use for studying and quick referen
   }
 
   const nextFlashcard = () => {
-    setCurrentFlashcard((prev) => (prev + 1) % mockFlashcards.length)
+    const flashcardsToUse = generatedFlashcards.length > 0 ? generatedFlashcards : mockFlashcards
+    setCurrentFlashcard((prev) => (prev + 1) % flashcardsToUse.length)
     setShowAnswer(false)
   }
 
   const prevFlashcard = () => {
-    setCurrentFlashcard((prev) => (prev - 1 + mockFlashcards.length) % mockFlashcards.length)
+    const flashcardsToUse = generatedFlashcards.length > 0 ? generatedFlashcards : mockFlashcards
+    setCurrentFlashcard((prev) => (prev - 1 + flashcardsToUse.length) % flashcardsToUse.length)
     setShowAnswer(false)
   }
 
@@ -733,8 +902,13 @@ Generate a complete summary that students can use for studying and quick referen
             size="sm"
             onClick={() => setMode("flashcards")}
             className="flex items-center space-x-1"
+            disabled={flashcardsLoading}
           >
-            <Brain className="w-4 h-4" />
+            {flashcardsLoading ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Brain className="w-4 h-4" />
+            )}
             <span>Flashcards</span>
           </Button>
           <Button
@@ -929,43 +1103,157 @@ Generate a complete summary that students can use for studying and quick referen
         )}
 
         {mode === "flashcards" && (
-          <div className="flex flex-col h-full p-4">
-            <div className="flex-1 flex items-center justify-center">
-              <Card className="w-full max-w-md p-6">
-                <div className="text-center space-y-4">
-                  <div className="text-sm text-muted-foreground">
-                    Card {currentFlashcard + 1} of {mockFlashcards.length}
-                  </div>
-
-                  <div className="min-h-[200px] flex items-center justify-center">
-                    <div className="text-center">
-                      <h3 className="text-lg font-medium mb-4">{showAnswer ? "Answer:" : "Question:"}</h3>
-                      <p className="text-foreground">
-                        {showAnswer
-                          ? mockFlashcards[currentFlashcard].answer
-                          : mockFlashcards[currentFlashcard].question}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button onClick={() => setShowAnswer(!showAnswer)} variant="outline" className="w-full">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    {showAnswer ? "Show Question" : "Show Answer"}
-                  </Button>
+          <div className="flex flex-col h-full">
+            {transcript === null ? (
+              <div className="h-full flex items-center justify-center text-center p-4">
+                <div className="max-w-md">
+                  <Brain className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Loading Transcript</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Please wait while we load the video transcript to generate flashcards.
+                  </p>
                 </div>
-              </Card>
-            </div>
+              </div>
+            ) : transcript.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center p-4">
+                <div className="max-w-md">
+                  <Brain className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Transcript Available</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Cannot generate flashcards because the video transcript could not be loaded.
+                  </p>
+                </div>
+              </div>
+            ) : flashcardsLoading ? (
+              <div className="h-full flex items-center justify-center text-center p-4">
+                <div className="max-w-md">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                  <h3 className="text-lg font-medium mb-2">Generating Flashcards</h3>
+                  <p className="text-sm text-muted-foreground">
+                    AI is analyzing the video transcript to create study flashcards...
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Flashcard Header */}
+                <div className="p-4 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Brain className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      <h2 className="text-lg font-semibold">Study Flashcards</h2>
+                    </div>
+                    {generatedFlashcards.length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setGeneratedFlashcards([])
+                          setCurrentFlashcard(0)
+                          generateFlashcards()
+                        }}
+                        disabled={flashcardsLoading}
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Regenerate
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
-            <div className="flex justify-between items-center pt-4">
-              <Button onClick={prevFlashcard} variant="outline">
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
-              </Button>
-              <Button onClick={nextFlashcard} variant="outline">
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
+                {/* Flashcard Content */}
+                <div className="flex-1 flex flex-col p-4">
+                  {generatedFlashcards.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-center">
+                      <div className="max-w-md">
+                        <Brain className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">Generate Flashcards</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Create AI-powered study flashcards from this video with clickable timestamp references.
+                        </p>
+                        <Button onClick={generateFlashcards} disabled={!transcript || transcript.length === 0}>
+                          <Brain className="w-4 h-4 mr-2" />
+                          Generate Flashcards
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex-1 flex items-center justify-center">
+                        <Card className="w-full max-w-2xl p-6">
+                          <div className="text-center space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm text-muted-foreground">
+                                Card {currentFlashcard + 1} of {generatedFlashcards.length}
+                              </div>
+                              <div className="bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded text-xs font-medium">
+                                AI Generated
+                              </div>
+                            </div>
+
+                            <div className="min-h-[300px] flex items-center justify-center">
+                              <div className="text-left w-full">
+                                <h3 className="text-lg font-medium mb-4 text-center">{showAnswer ? "Answer:" : "Question:"}</h3>
+                                <div className="text-foreground">
+                                  {showAnswer ? (
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                      {renderMessageContent(generatedFlashcards[currentFlashcard]?.answer || "")}
+                                    </div>
+                                  ) : (
+                                    <p className="text-center text-lg">{generatedFlashcards[currentFlashcard]?.question}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <Button onClick={() => setShowAnswer(!showAnswer)} variant="outline" className="w-full">
+                              <RotateCcw className="w-4 h-4 mr-2" />
+                              {showAnswer ? "Show Question" : "Show Answer"}
+                            </Button>
+                          </div>
+                        </Card>
+                      </div>
+
+                      {/* Navigation Controls */}
+                      <div className="flex justify-between items-center pt-4">
+                        <Button onClick={prevFlashcard} variant="outline" disabled={generatedFlashcards.length <= 1}>
+                          <ChevronLeft className="w-4 h-4 mr-1" />
+                          Previous
+                        </Button>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setCurrentFlashcard(0)
+                              setShowAnswer(false)
+                            }}
+                            className="text-xs"
+                          >
+                            First Card
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setCurrentFlashcard(generatedFlashcards.length - 1)
+                              setShowAnswer(false)
+                            }}
+                            className="text-xs"
+                          >
+                            Last Card
+                          </Button>
+                        </div>
+                        <Button onClick={nextFlashcard} variant="outline" disabled={generatedFlashcards.length <= 1}>
+                          Next
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 

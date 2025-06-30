@@ -105,10 +105,28 @@ export function VideoSection({ screenshots, setScreenshots, videoId = "dpw9EHDh2
   const handleModeSwitch = (newMode: Mode) => {
     // Save player state before switching to notes
     if (mode === "video" && newMode === "notes" && playerInstance) {
-      setPlayerState({
-        currentTime: playerInstance.getCurrentTime() || 0,
-        isPlaying: playerInstance.getPlayerState() === 1, // 1 = playing
-      })
+      try {
+        // Check if methods exist before calling them
+        const currentTime = typeof playerInstance.getCurrentTime === 'function' 
+          ? (playerInstance.getCurrentTime() || 0) 
+          : 0;
+        
+        const playerState = typeof playerInstance.getPlayerState === 'function' 
+          ? playerInstance.getPlayerState() 
+          : -1; // -1 = unstarted
+        
+        setPlayerState({
+          currentTime,
+          isPlaying: playerState === 1, // 1 = playing
+        })
+      } catch (error) {
+        console.warn('Error getting player state:', error);
+        // Set default values if there's an error
+        setPlayerState({
+          currentTime: 0,
+          isPlaying: false,
+        })
+      }
     }
 
     setMode(newMode)
